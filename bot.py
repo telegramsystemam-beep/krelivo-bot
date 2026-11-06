@@ -9,45 +9,101 @@ bot = telebot.TeleBot(TOKEN)
 
 app = Flask('')
 
+# دیتابیس ساده برای ثبت تعداد دعوت‌های کاربران (Affiliate)
+user_invites = {}
+user_referred = set()
+
 @app.route('/')
 def home():
     return "Bot is alive!"
 
-# منوی اصلی
+# دستور استارت و بررسی سیستم دعوت دوستان
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    markup = types.InlineKeyboardMarkup(row_width=2)
-    btn_catalog = types.InlineKeyboardButton("🛍️ Catalog", callback_data="catalog")
-    btn_cart = types.InlineKeyboardButton("🛒 Cart", callback_data="cart")
-    btn_profile = types.InlineKeyboardButton("👤 Profile", callback_data="profile")
-    btn_premium = types.InlineKeyboardButton("⭐ Premium Plans", callback_data="premium")
-    btn_support = types.InlineKeyboardButton("📝 Support Ticket", callback_data="support")
-    btn_wallet = types.InlineKeyboardButton("💎 Tonkeeper Pay", url="https://tonkeeper.com/")
-    markup.add(btn_catalog, btn_cart, btn_profile, btn_premium, btn_support, btn_wallet)
+    user_id = message.from_user.id
+    args = message.text.split()
     
-    welcome_text = "Welcome to Krelivo Store! 🚀\n\nExplore our exclusive digital products below."
-    bot.send_message(message.chat.id, welcome_text, reply_markup=markup)
+    # اگر کاربر با لینک دعوت کسی وارد شده باشد
+    if len(args) > 1 and args[1].startswith("ref_"):
+        try:
+            inviter_id = int(args[1].replace("ref_", ""))
+            if inviter_id != user_id and user_id not in user_referred:
+                user_referred.add(user_id)
+                user_invites[inviter_id] = user_invites.get(inviter_id, 0) + 1
+                try:
+                    bot.send_message(inviter_id, "✨ Someone joined via your referral link! Your reward has been updated.")
+                except:
+                    pass
+        except:
+            pass
 
-# متدهای ساخت منوها با قابلیت ویرایش پیام (جلوگیری از ارسال پیام جدید)
-def show_main_menu(chat_id, message_id):
+    show_main_menu(message.chat.id, None, is_new=True)
+
+def show_main_menu(chat_id, message_id=None, is_new=False):
     markup = types.InlineKeyboardMarkup(row_width=2)
     markup.add(
         types.InlineKeyboardButton("🛍️ Catalog", callback_data="catalog"),
         types.InlineKeyboardButton("🛒 Cart", callback_data="cart"),
         types.InlineKeyboardButton("👤 Profile", callback_data="profile"),
-        types.InlineKeyboardButton("⭐ Premium Plans", callback_data="premium"),
+        types.InlineKeyboardButton("🟢 ⭐ Premium Plans", callback_data="premium"),
+        types.InlineKeyboardButton("🤝 Affiliate Program", callback_data="affiliate"),
+        types.InlineKeyboardButton("🌐 Language", callback_data="language"),
         types.InlineKeyboardButton("📝 Support Ticket", callback_data="support"),
         types.InlineKeyboardButton("💎 Tonkeeper Pay", url="https://tonkeeper.com/")
     )
-    bot.edit_message_text("Welcome to Krelivo Store! 🚀\n\nExplore our exclusive digital products below.", chat_id, message_id, reply_markup=markup)
+    text = "Welcome to Krelivo Store! 🚀\n\nExplore our exclusive digital products and services below."
+    
+    if is_new or not message_id:
+        bot.send_message(chat_id, text, reply_markup=markup)
+    else:
+        try:
+            bot.edit_message_text(text, chat_id, message_id, reply_markup=markup)
+        except:
+            bot.send_message(chat_id, text, reply_markup=markup)
+
+# منوی انتخاب زبان (مشابه عکس اول)
+def show_language_menu(chat_id, message_id):
+    markup = types.InlineKeyboardMarkup(row_width=2)
+    markup.add(
+        types.InlineKeyboardButton("🇷🇺 Русский", callback_data="lang_ru"),
+        types.InlineKeyboardButton("🇬🇧 English ✓", callback_data="lang_en"),
+        types.InlineKeyboardButton("🇺🇦 Українська", callback_data="lang_uk"),
+        types.InlineKeyboardButton("🇮🇷 فارسی", callback_data="lang_fa"),
+        types.InlineKeyboardButton("🇸🇦 العربية", callback_data="lang_ar"),
+        types.InlineKeyboardButton("🇨🇳 中文", callback_data="lang_cn"),
+        types.InlineKeyboardButton("« Back to Main Menu", callback_data="main_menu")
+    )
+    bot.edit_message_text("🌐 **Select Language / انتخاب زبان**\n\nChoose your preferred interface language:", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
+
+# منوی سیستم همکاری در فروش (مشابه عکس دوم)
+def show_affiliate_menu(chat_id, message_id):
+    count = user_invites.get(chat_id, 0)
+    # نام کاربری ربات خود را اینجا قرار دهید
+    ref_link = f"https://t.me/Krelivo_bot?start=ref_{chat_id}"
+    
+    markup = types.InlineKeyboardMarkup(row_width=1)
+    markup.add(
+        types.InlineKeyboardButton("🔗 Share Referral Link", url=f"https://t.me/share/url?url={ref_link}&text=Join%20Krelivo%20Store%20and%20get%20exclusive%20digital%20products!"),
+        types.InlineKeyboardButton("« Back to Main Menu", callback_data="main_menu")
+    )
+    
+    text = (
+        "🤝 **Affiliate Program** ⭐\n\n"
+        "✨ Invite your friends and earn rewards for every referral!\n\n"
+        f"🔗 **Your Invite Link:**\n`{ref_link}`\n\n"
+        f"📊 **Your Stats:**\n"
+        f"• Invited Users: **{count}**\n"
+        f"• Rewards Earned: **{count * 10} ⭐️**"
+    )
+    bot.edit_message_text(text, chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
 
 def show_premium_menu(chat_id, message_id):
     markup = types.InlineKeyboardMarkup(row_width=1)
     markup.add(
-        types.InlineKeyboardButton("⭐ Single Package – 50 ⭐️", callback_data="pay_single"),
-        types.InlineKeyboardButton("⭐ Basic (30 Days) – 290 ⭐️", callback_data="pay_basic"),
-        types.InlineKeyboardButton("⭐ Pro (30 Days) – 690 ⭐️", callback_data="pay_pro"),
-        types.InlineKeyboardButton("⭐ Ultra (30 Days) – 1990 ⭐️", callback_data="pay_ultra"),
+        types.InlineKeyboardButton("🟢 ⭐ Single Package – 50 ⭐️", callback_data="pay_single"),
+        types.InlineKeyboardButton("🟢 ⭐ Basic (30 Days) – 290 ⭐️", callback_data="pay_basic"),
+        types.InlineKeyboardButton("🟢 ⭐ Pro (30 Days) – 690 ⭐️", callback_data="pay_pro"),
+        types.InlineKeyboardButton("🟢 ⭐ Ultra (30 Days) – 1990 ⭐️", callback_data="pay_ultra"),
         types.InlineKeyboardButton("« Back to Main Menu", callback_data="main_menu")
     )
     bot.edit_message_text("⭐ **Special Offers & Plans (30 Days)**\nChoose your subscription plan below:", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
@@ -69,6 +125,15 @@ def callback_query(call):
     elif call.data == "premium":
         bot.answer_callback_query(call.id)
         show_premium_menu(chat_id, message_id)
+    elif call.data == "affiliate":
+        bot.answer_callback_query(call.id)
+        show_affiliate_menu(chat_id, message_id)
+    elif call.data == "language":
+        bot.answer_callback_query(call.id)
+        show_language_menu(chat_id, message_id)
+    elif call.data.startswith("lang_"):
+        bot.answer_callback_query(call.id, "Language updated!")
+        show_main_menu(chat_id, message_id)
     elif call.data == "catalog":
         bot.answer_callback_query(call.id)
         show_catalog(chat_id, message_id)
@@ -87,7 +152,6 @@ def callback_query(call):
         bot.send_message(chat_id, "📝 **Support Ticket**\n\nPlease type and send your question or issue in a single message.", parse_mode="Markdown")
     elif call.data.startswith("pay_"):
         bot.answer_callback_query(call.id)
-        # تعیین قیمت بر اساس نوع اشتراک (واحد بر حسب ستاره XTR)
         prices = {
             "pay_single": 50,
             "pay_basic": 290,
@@ -97,18 +161,16 @@ def callback_query(call):
         plan_name = call.data.replace("pay_", "").capitalize()
         amount = prices.get(call.data, 50)
         
-        # ارسال فاکتور رسمی تلگرام برای پرداخت با ستاره
         bot.send_invoice(
             chat_id=chat_id,
             title=f"Krelivo {plan_name} Plan",
             description=f"Subscription for {plan_name} package in Krelivo Store (30 Days)",
             invoice_payload=f"krelivo_{plan_name.lower()}",
-            provider_token="",  # برای ستاره تلگرام باید خالی باشد
-            currency="XTR",     # کد ارز ستاره تلگرام
+            provider_token="",
+            currency="XTR",
             prices=[types.LabeledPrice(label=f"{plan_name} Plan", amount=amount)]
         )
 
-# پردازش نهایی پرداخت موفق ستاره
 @bot.pre_checkout_query_handler(func=lambda query: True)
 def checkout(pre_checkout_query):
     bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
