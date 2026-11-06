@@ -1,11 +1,12 @@
 import os
 import telebot
 from flask import Flask
+import threading
 
 TOKEN = "9081123644:AAGv3PKfhdXcllBYkvvy11W07fKub6VLKqQ"
 bot = telebot.TeleBot(TOKEN)
 
-# ساخت یک وب‌سرور ساده برای راضی کردن رندر روی پلن رایگان
+# ساخت وب‌سرور فلاسگ
 server = Flask(__name__)
 
 @server.route('/')
@@ -32,8 +33,8 @@ def send_welcome(message):
 @bot.callback_query_handler(func=lambda call: True)
 def callback_inline(call):
     if call.data == "products":
-        bot.answer_callback_query(call.id, "بارگذاری محصولات...")
-        bot.send_message(call.message.chat.id, "📦 لیست دسته‌بندی محصولات:\n\n1️⃣ کالای دیجیتال\n2️⃣ پوشاک\n\nکد محصول مورد نظر را انتخاب کنید.")
+        bot.answer_callback_query(call.id)
+        bot.send_message(call.message.chat.id, "📦 لیست دسته‌بندی محصولات:\n\n1️⃣ کالای دیجیتال\n2️⃣ پوشاک\n\nلطفاً عدد ۱ یا ۲ را ارسال کنید.")
     elif call.data == "cart":
         bot.answer_callback_query(call.id)
         bot.send_message(call.message.chat.id, "🛒 سبد خرید شما در حال حاضر خالی است.")
@@ -42,10 +43,20 @@ def callback_inline(call):
         bot.send_message(call.message.chat.id, "📞 برای ارتباط با پشتیبانی به آی‌دی زیر پیام دهید:\n@Support_Krelivo")
     elif call.data == "about":
         bot.answer_callback_query(call.id)
-        bot.send_message(call.message.chat.id, "ℹ️ فروشگاه Krelivo، ارائه دهنده بهترین محصولات با مناسب‌ترین قیمت به صورت ۲۴ ساعته در خدمت شماست.")
+        bot.send_message(call.message.chat.id, "ℹ️ فروشگاه Krelivo، ارائه دهنده بهترین محصولات با مناسب‌ترین قیمت.")
+
+@bot.message_handler(func=lambda message: True)
+def handle_all_messages(message):
+    text = message.text.strip()
+    if text == "1" or "دیجیتال" in text:
+        bot.send_message(message.chat.id, "📱 **بخش کالای دیجیتال:**\n- گوشی موبایل و لوازم جانبی\n- هدست و ساعت هوشمند")
+    elif text == "2" or "پوشاک" in text:
+        bot.send_message(message.chat.id, "👕 **بخش پوشاک:**\n- هودی و تیشرت\n- شلوار و اکسسوری")
+    else:
+        bot.send_message(message.chat.id, "دستور نامعتبر! برای مشاهده منو لطفا /start را بفرستید.")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    import threading
-    threading.Thread(target=server.run, kwargs={"host": "0.0.0.0", "port": port}).start()
+    # اجرای فلاسگ بدون ری‌لودر در ترد جداگانه
+    threading.Thread(target=server.run, kwargs={"host": "0.0.0.0", "port": port, "debug": False, "use_reloader": False}).start()
     bot.infinity_polling()
