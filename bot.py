@@ -6,6 +6,9 @@ import threading
 
 TOKEN = "9081123644:AAGv3PKfhdXcllBYkvvy11W07fKub6VLKqQ"
 bot = telebot.TeleBot(TOKEN)
+
+app = Flask('')
+
 # ذخیره زبان کاربران
 user_languages = {}
 
@@ -97,9 +100,6 @@ TRANSLATIONS = {
     }
 }
 
-app = Flask('')
-
-# دیتابیس ساده برای ثبت تعداد دعوت‌های کاربران (Affiliate)
 user_invites = {}
 user_referred = set()
 
@@ -107,7 +107,6 @@ user_referred = set()
 def home():
     return "Bot is alive!"
 
-# صفحه وب مینی‌اپلیکیشن (جهت داشتن دکمه‌ها و ظاهر رنگی و گرافیکی)
 @app.route('/webapp')
 def webapp_page():
     return """
@@ -134,7 +133,6 @@ def webapp_page():
     </html>
     """
 
-# دستور استارت و مدیریت لینک‌های دعوت (Affiliate)
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     user_id = message.from_user.id
@@ -156,27 +154,29 @@ def send_welcome(message):
     show_main_menu(message.chat.id, None, is_new=True)
 
 def show_main_menu(chat_id, message_id=None, is_new=False):
+    lang = user_languages.get(chat_id, "en")
+    t = TRANSLATIONS.get(lang, TRANSLATIONS["en"])
+    
     markup = types.InlineKeyboardMarkup(row_width=2)
     markup.add(
         types.InlineKeyboardButton("🟢 🛍️ Open Krelivo WebApp", web_app=types.WebAppInfo(url="https://krelivo-bot.onrender.com/webapp")),
-        types.InlineKeyboardButton("🛍️ Catalog", callback_data="catalog"),
-        types.InlineKeyboardButton("🛒 Cart", callback_data="cart"),
-        types.InlineKeyboardButton("👤 Profile", callback_data="profile"),
-        types.InlineKeyboardButton("⭐ Premium Plans", callback_data="premium"),
-        types.InlineKeyboardButton("🤝 Affiliate Program", callback_data="affiliate"),
-        types.InlineKeyboardButton("🌐 Language", callback_data="language"),
-        types.InlineKeyboardButton("📝 Support Ticket", callback_data="support"),
+        types.InlineKeyboardButton(t["catalog"], callback_data="catalog"),
+        types.InlineKeyboardButton(t["cart"], callback_data="cart"),
+        types.InlineKeyboardButton(t["profile"], callback_data="profile"),
+        types.InlineKeyboardButton(t["premium"], callback_data="premium"),
+        types.InlineKeyboardButton(t["affiliate"], callback_data="affiliate"),
+        types.InlineKeyboardButton(t["language"], callback_data="language"),
+        types.InlineKeyboardButton(t["support"], callback_data="support"),
         types.InlineKeyboardButton("💎 Tonkeeper Pay", url="https://tonkeeper.com/")
     )
-    text = "Welcome to Krelivo Store! 🚀\n\nExplore our exclusive digital products and services below."
     
     if is_new or not message_id:
-        bot.send_message(chat_id, text, reply_markup=markup)
+        bot.send_message(chat_id, t["welcome"], reply_markup=markup)
     else:
         try:
-            bot.edit_message_text(text, chat_id, message_id, reply_markup=markup)
+            bot.edit_message_text(t["welcome"], chat_id, message_id, reply_markup=markup)
         except:
-            bot.send_message(chat_id, text, reply_markup=markup)
+            bot.send_message(chat_id, t["welcome"], reply_markup=markup)
 
 def show_language_menu(chat_id, message_id):
     markup = types.InlineKeyboardMarkup(row_width=2)
@@ -201,7 +201,6 @@ def show_language_menu(chat_id, message_id):
         "🌐 **Select Language / انتخاب زبان / Выберите язык**\n\nChoose your preferred interface language:", 
         chat_id, message_id, reply_markup=markup, parse_mode="Markdown"
     )
-
 
 def show_affiliate_menu(chat_id, message_id):
     count = user_invites.get(chat_id, 0)
@@ -239,7 +238,6 @@ def show_catalog(chat_id, message_id):
     markup.add(types.InlineKeyboardButton("« Back to Main Menu", callback_data="main_menu"))
     bot.edit_message_text("🛍️ **Catalog:**\nProducts will be loaded here soon. Stay tuned!", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
 
-# مدیریت کلیک دکمه‌ها
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
     chat_id = call.message.chat.id
@@ -257,9 +255,9 @@ def callback_query(call):
     elif call.data == "language":
         bot.answer_callback_query(call.id)
         show_language_menu(chat_id, message_id)
-        elif call.data.startswith("lang_"):
+    elif call.data.startswith("lang_"):
         lang_code = call.data.replace("lang_", "")
-        user_languages[chat_id] = lang_code  # ذخیره زبان انتخابی کاربر
+        user_languages[chat_id] = lang_code
         bot.answer_callback_query(call.id, "Language updated successfully! / زبان با موفقیت تغییر کرد")
         show_main_menu(chat_id, message_id)
     elif call.data == "catalog":
