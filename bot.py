@@ -6,6 +6,96 @@ import threading
 
 TOKEN = "9081123644:AAGv3PKfhdXcllBYkvvy11W07fKub6VLKqQ"
 bot = telebot.TeleBot(TOKEN)
+# ذخیره زبان کاربران
+user_languages = {}
+
+# ترجمه کامل متن‌ها برای تمام زبان‌های درخواست‌شده
+TRANSLATIONS = {
+    "en": {
+        "welcome": "Welcome to Krelivo Store! 🚀\n\nExplore our exclusive digital products and services below.",
+        "catalog": "🛍️ Catalog", "cart": "🛒 Cart", "profile": "👤 Profile",
+        "premium": "⭐ Premium Plans", "affiliate": "🤝 Affiliate Program",
+        "language": "🌐 Language", "support": "📝 Support Ticket"
+    },
+    "fa": {
+        "welcome": "به فروشگاه کرلیوو خوش آمدید! 🚀\n\nمحصولات و خدمات انحصاری ما را در زیر بررسی کنید.",
+        "catalog": "🛍️ کاتالوگ", "cart": "🛒 سبد خرید", "profile": "👤 پروفایل",
+        "premium": "⭐ اشتراک‌های پریمیوم", "affiliate": "🤝 برنامه همکاری در فروش",
+        "language": "🌐 زبان", "support": "📝 تیکت پشتیبانی"
+    },
+    "ru": {
+        "welcome": "Добро пожаловать в Krelivo Store! 🚀\n\nИзучите наши эксклюзивные цифровые продукты ниже.",
+        "catalog": "🛍️ Каталог", "cart": "🛒 Корзина", "profile": "👤 Профиль",
+        "premium": "⭐ Премиум планы", "affiliate": "🤝 Партнерская программа",
+        "language": "🌐 Язык", "support": "📝 Поддержка"
+    },
+    "uk": {
+        "welcome": "Ласкаво просимо до Krelivo Store! 🚀\n\nДосліджуйте наші ексклюзивні цифрові продукти нижче.",
+        "catalog": "🛍️ Каталог", "cart": "🛒 Кошик", "profile": "👤 Профіль",
+        "premium": "⭐ Преміум плани", "affiliate": "🤝 Партнерська програма",
+        "language": "🌐 Мова", "support": "📝 Підтримка"
+    },
+    "ar": {
+        "welcome": "أهلاً بك في متجر Krelivo! 🚀\n\nاستكشف منتجاتنا وخدماتنا الرقمية الحصرية أدناه.",
+        "catalog": "🛍️ الكتالوج", "cart": "🛒 السلة", "profile": "👤 الملف الشخصي",
+        "premium": "⭐ الخطط المميزة", "affiliate": "🤝 برنامج الشراكة",
+        "language": "🌐 اللغة", "support": "📝 تذكرة الدعم"
+    },
+    "zh": {
+        "welcome": "欢迎来到 Krelivo 商店！🚀\n\n在下方探索我们的独家数字产品和服务。",
+        "catalog": "🛍️ 目录", "cart": "🛒 购物车", "profile": "👤 个人资料",
+        "premium": "⭐ 高级计划", "affiliate": "🤝 联盟计划",
+        "language": "🌐 语言", "support": "📝 支持工单"
+    },
+    "es": {
+        "welcome": "¡Bienvenido a Krelivo Store! 🚀\n\nExplora nuestros productos y servicios digitales exclusivos a continuación.",
+        "catalog": "🛍️ Catálogo", "cart": "🛒 Carrito", "profile": "👤 Perfil",
+        "premium": "⭐ Planes Premium", "affiliate": "🤝 Programa de Afiliados",
+        "language": "🌐 Idioma", "support": "📝 Soporte"
+    },
+    "id": {
+        "welcome": "Selamat datang di Krelivo Store! 🚀\n\nJelajahi produk dan layanan digital eksklusif kami di bawah ini.",
+        "catalog": "🛍️ Katalog", "cart": "🛒 Keranjang", "profile": "👤 Profil",
+        "premium": "⭐ Paket Premium", "affiliate": "🤝 Program Afiliasi",
+        "language": "🌐 Bahasa", "support": "📝 Tiket Dukungan"
+    },
+    "pt": {
+        "welcome": "Bem-vindo à Krelivo Store! 🚀\n\nExplore nossos produtos e serviços digitais exclusivos abaixo.",
+        "catalog": "🛍️ Catálogo", "cart": "🛒 Carrinho", "profile": "👤 Perfil",
+        "premium": "⭐ Planos Premium", "affiliate": "🤝 Programa de Afiliados",
+        "language": "🌐 Idioma", "support": "📝 Suporte"
+    },
+    "fr": {
+        "welcome": "Bienvenue sur Krelivo Store ! 🚀\n\nDécouvrez nos produits et services numériques exclusifs ci-dessous.",
+        "catalog": "🛍️ Catalogue", "cart": "🛒 Panier", "profile": "👤 Profil",
+        "premium": "⭐ Plans Premium", "affiliate": "🤝 Programme d'affiliation",
+        "language": "🌐 Langue", "support": "📝 Support"
+    },
+    "tr": {
+        "welcome": "Krelivo Mağazasına Hoş Geldiniz! 🚀\n\nÖzel dijital ürünlerimizi ve hizmetlerimizi aşağıda keşfedin.",
+        "catalog": "🛍️ Katalog", "cart": "🛒 Sepet", "profile": "👤 Profil",
+        "premium": "⭐ Premium Planlar", "affiliate": "🤝 Ortaklık Programı",
+        "language": "🌐 Dil", "support": "📝 Destek"
+    },
+    "vi": {
+        "welcome": "Chào mừng đến với Krelivo Store! 🚀\n\nKhám phá các sản phẩm và dịch vụ kỹ thuật số độc quyền của chúng tôi bên dưới.",
+        "catalog": "🛍️ Danh mục", "cart": "🛒 Giỏ hàng", "profile": "👤 Hồ sơ",
+        "premium": "⭐ Gói Premium", "affiliate": "🤝 Chương trình liên kết",
+        "language": "🌐 Ngôn ngữ", "support": "📝 Hỗ trợ"
+    },
+    "de": {
+        "welcome": "Willkommen im Krelivo Store! 🚀\n\nEntdecken Sie unten unsere exklusiven digitalen Produkte und Dienstleistungen.",
+        "catalog": "🛍️ Katalog", "cart": "🛒 Warenkorb", "profile": "👤 Profil",
+        "premium": "⭐ Premium-Pakete", "affiliate": "🤝 Partnerprogramm",
+        "language": "🌐 Sprache", "support": "📝 Support"
+    },
+    "it": {
+        "welcome": "Benvenuto su Krelivo Store! 🚀\n\nEsplora i nostri prodotti e servizi digitali esclusivi qui sotto.",
+        "catalog": "🛍️ Catalogo", "cart": "🛒 Carrello", "profile": "👤 Profilo",
+        "premium": "⭐ Piani Premium", "affiliate": "🤝 Programma Affiliati",
+        "language": "🌐 Lingua", "support": "📝 Supporto"
+    }
+}
 
 app = Flask('')
 
