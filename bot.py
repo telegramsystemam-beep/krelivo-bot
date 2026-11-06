@@ -182,14 +182,26 @@ def show_language_menu(chat_id, message_id):
     markup = types.InlineKeyboardMarkup(row_width=2)
     markup.add(
         types.InlineKeyboardButton("🇷🇺 Русский", callback_data="lang_ru"),
-        types.InlineKeyboardButton("🇬🇧 English ✓", callback_data="lang_en"),
+        types.InlineKeyboardButton("🇬🇧 English", callback_data="lang_en"),
         types.InlineKeyboardButton("🇺🇦 Українська", callback_data="lang_uk"),
         types.InlineKeyboardButton("🇮🇷 فارسی", callback_data="lang_fa"),
         types.InlineKeyboardButton("🇸🇦 العربية", callback_data="lang_ar"),
         types.InlineKeyboardButton("🇨🇳 中文", callback_data="lang_cn"),
-        types.InlineKeyboardButton("« Back to Main Menu", callback_data="main_menu")
+        types.InlineKeyboardButton("🇪🇸 Español", callback_data="lang_es"),
+        types.InlineKeyboardButton("🇮🇩 Indonesia", callback_data="lang_id"),
+        types.InlineKeyboardButton("🇵🇹 Português", callback_data="lang_pt"),
+        types.InlineKeyboardButton("🇫🇷 Français", callback_data="lang_fr"),
+        types.InlineKeyboardButton("🇹🇷 Türkçe", callback_data="lang_tr"),
+        types.InlineKeyboardButton("🇻🇳 Tiếng Việt", callback_data="lang_vi"),
+        types.InlineKeyboardButton("🇩🇪 Deutsch", callback_data="lang_de"),
+        types.InlineKeyboardButton("🇮🇹 Italiano", callback_data="lang_it"),
+        types.InlineKeyboardButton("« Back", callback_data="main_menu")
     )
-    bot.edit_message_text("🌐 **Select Language**\n\nChoose your preferred interface language:", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
+    bot.edit_message_text(
+        "🌐 **Select Language / انتخاب زبان / Выберите язык**\n\nChoose your preferred interface language:", 
+        chat_id, message_id, reply_markup=markup, parse_mode="Markdown"
+    )
+
 
 def show_affiliate_menu(chat_id, message_id):
     count = user_invites.get(chat_id, 0)
