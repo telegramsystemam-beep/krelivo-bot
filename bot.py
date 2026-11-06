@@ -56,7 +56,15 @@ def handle_all_messages(message):
         bot.send_message(message.chat.id, "دستور نامعتبر! برای مشاهده منو لطفا /start را بفرستید.")
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    # اجرای فلاسگ بدون ری‌لودر در ترد جداگانه
+    port = int(os.environ.get("PORT", 10000))
+    # اجرای وب‌سرور فلاسگ
     threading.Thread(target=server.run, kwargs={"host": "0.0.0.0", "port": port, "debug": False, "use_reloader": False}).start()
+    
+    # پاک کردن وب‌هوک‌های قبلی برای جلوگیری از خطای ۴۰۹
+    try:
+        bot.remove_webhook()
+    except Exception as e:
+        print(e)
+        
+    # شروع به کار ربات
     bot.infinity_polling()
