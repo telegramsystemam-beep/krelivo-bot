@@ -17,13 +17,39 @@ user_referred = set()
 def home():
     return "Bot is alive!"
 
-# دستور استارت و بررسی سیستم دعوت دوستان
+# صفحه وب مینی‌اپلیکیشن (جهت داشتن دکمه‌ها و ظاهر رنگی و گرافیکی)
+@app.route('/webapp')
+def webapp_page():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Krelivo Store</title>
+        <style>
+            body { background: #18191a; color: #fff; font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+            .card { background: #242526; padding: 20px; border-radius: 12px; margin: 15px auto; max-width: 400px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+            .btn-green { background: #22c55e; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 16px; margin-top: 10px; }
+        </style>
+    </head>
+    <body>
+        <h2>Krelivo Global Store 🚀</h2>
+        <div class="card">
+            <h3>⭐ Pro Plan (30 Days)</h3>
+            <p>Price: 690 Stars ⭐️</p>
+            <button class="btn-green" onclick="alert('Selected successfully!')">Buy Now</button>
+        </div>
+        <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    </body>
+    </html>
+    """
+
+# دستور استارت و مدیریت لینک‌های دعوت (Affiliate)
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     user_id = message.from_user.id
     args = message.text.split()
     
-    # اگر کاربر با لینک دعوت کسی وارد شده باشد
     if len(args) > 1 and args[1].startswith("ref_"):
         try:
             inviter_id = int(args[1].replace("ref_", ""))
@@ -42,10 +68,11 @@ def send_welcome(message):
 def show_main_menu(chat_id, message_id=None, is_new=False):
     markup = types.InlineKeyboardMarkup(row_width=2)
     markup.add(
+        types.InlineKeyboardButton("🟢 🛍️ Open Krelivo WebApp", web_app=types.WebAppInfo(url="https://krelivo-bot.onrender.com/webapp")),
         types.InlineKeyboardButton("🛍️ Catalog", callback_data="catalog"),
         types.InlineKeyboardButton("🛒 Cart", callback_data="cart"),
         types.InlineKeyboardButton("👤 Profile", callback_data="profile"),
-        types.InlineKeyboardButton("🟢 ⭐ Premium Plans", callback_data="premium"),
+        types.InlineKeyboardButton("⭐ Premium Plans", callback_data="premium"),
         types.InlineKeyboardButton("🤝 Affiliate Program", callback_data="affiliate"),
         types.InlineKeyboardButton("🌐 Language", callback_data="language"),
         types.InlineKeyboardButton("📝 Support Ticket", callback_data="support"),
@@ -61,7 +88,6 @@ def show_main_menu(chat_id, message_id=None, is_new=False):
         except:
             bot.send_message(chat_id, text, reply_markup=markup)
 
-# منوی انتخاب زبان (مشابه عکس اول)
 def show_language_menu(chat_id, message_id):
     markup = types.InlineKeyboardMarkup(row_width=2)
     markup.add(
@@ -73,12 +99,10 @@ def show_language_menu(chat_id, message_id):
         types.InlineKeyboardButton("🇨🇳 中文", callback_data="lang_cn"),
         types.InlineKeyboardButton("« Back to Main Menu", callback_data="main_menu")
     )
-    bot.edit_message_text("🌐 **Select Language / انتخاب زبان**\n\nChoose your preferred interface language:", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
+    bot.edit_message_text("🌐 **Select Language**\n\nChoose your preferred interface language:", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
 
-# منوی سیستم همکاری در فروش (مشابه عکس دوم)
 def show_affiliate_menu(chat_id, message_id):
     count = user_invites.get(chat_id, 0)
-    # نام کاربری ربات خود را اینجا قرار دهید
     ref_link = f"https://t.me/Krelivo_bot?start=ref_{chat_id}"
     
     markup = types.InlineKeyboardMarkup(row_width=1)
