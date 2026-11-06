@@ -257,8 +257,10 @@ def callback_query(call):
     elif call.data == "language":
         bot.answer_callback_query(call.id)
         show_language_menu(chat_id, message_id)
-    elif call.data.startswith("lang_"):
-        bot.answer_callback_query(call.id, "Language updated!")
+        elif call.data.startswith("lang_"):
+        lang_code = call.data.replace("lang_", "")
+        user_languages[chat_id] = lang_code  # ذخیره زبان انتخابی کاربر
+        bot.answer_callback_query(call.id, "Language updated successfully! / زبان با موفقیت تغییر کرد")
         show_main_menu(chat_id, message_id)
     elif call.data == "catalog":
         bot.answer_callback_query(call.id)
