@@ -6,12 +6,35 @@ import threading
 TOKEN = "9081123644:AAGv3PKfhdXcllBYkvvy11W07fKub6VLKqQ"
 bot = telebot.TeleBot(TOKEN)
 
-# ساخت وب‌سرور فلاسگ
+# ساخت وب‌سرور فلاسگ با قالب گرافیکی مینی‌پپ
 server = Flask(__name__)
 
 @server.route('/')
 def webhook():
-    return "Bot is running!", 200
+    return """
+    <!DOCTYPE html>
+    <html lang="fa" dir="rtl">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>فروشگاه Krelivo</title>
+        <style>
+            body { background-color: #121212; color: #ffffff; font-family: Tahoma, sans-serif; text-align: center; padding: 40px; margin: 0; }
+            .container { background: #1e1e1e; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.6); max-width: 400px; margin: auto; }
+            h1 { color: #2ea6ff; font-size: 22px; }
+            p { color: #cccccc; font-size: 14px; line-height: 1.6; }
+            .btn { display: inline-block; background: #2ea6ff; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; margin-top: 15px; font-weight: bold; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🛍️ فروشگاه Krelivo</h1>
+            <p>خوش آمدید! فروشگاه آنلاین شما با موفقیت روی سرور فعال شد و آماده‌ی استفاده است.</p>
+            <a href="https://t.me/Krelivo_bot" class="btn">بازگشت به ربات</a>
+        </div>
+    </body>
+    </html>
+    """, 200
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
@@ -57,14 +80,11 @@ def handle_all_messages(message):
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
-    # اجرای وب‌سرور فلاسگ
     threading.Thread(target=server.run, kwargs={"host": "0.0.0.0", "port": port, "debug": False, "use_reloader": False}).start()
     
-    # پاک کردن وب‌هوک‌های قبلی برای جلوگیری از خطای ۴۰۹
     try:
         bot.remove_webhook()
     except Exception as e:
         print(e)
         
-    # شروع به کار ربات
     bot.infinity_polling()
