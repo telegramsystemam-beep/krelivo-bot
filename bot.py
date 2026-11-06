@@ -1,17 +1,25 @@
+import os
 import telebot
-from telebot import types
+from flask import Flask
 
 TOKEN = "9081123644:AAGv3PKfhdXcllBYkvvy11W07fKub6VLKqQ"
 bot = telebot.TeleBot(TOKEN)
 
+# ساخت یک وب‌سرور ساده برای راضی کردن رندر روی پلن رایگان
+server = Flask(__name__)
+
+@server.route('/')
+def webhook():
+    return "Bot is running!", 200
+
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     user_name = message.from_user.first_name
-    markup = types.InlineKeyboardMarkup(row_width=2)
-    item1 = types.InlineKeyboardButton("🛍️ مشاهده محصولات", callback_data="products")
-    item2 = types.InlineKeyboardButton("🛒 سبد خرید", callback_data="cart")
-    item3 = types.InlineKeyboardButton("📞 پشتیبانی", callback_data="support")
-    item4 = types.InlineKeyboardButton("ℹ️ درباره ما", callback_data="about")
+    markup = telebot.types.InlineKeyboardMarkup(row_width=2)
+    item1 = telebot.types.InlineKeyboardButton("🛍️ مشاهده محصولات", callback_data="products")
+    item2 = telebot.types.InlineKeyboardButton("🛒 سبد خرید", callback_data="cart")
+    item3 = telebot.types.InlineKeyboardButton("📞 پشتیبانی", callback_data="support")
+    item4 = telebot.types.InlineKeyboardButton("ℹ️ درباره ما", callback_data="about")
     markup.add(item1, item2, item3, item4)
     
     welcome_text = (
@@ -37,5 +45,7 @@ def callback_inline(call):
         bot.send_message(call.message.chat.id, "ℹ️ فروشگاه Krelivo، ارائه دهنده بهترین محصولات با مناسب‌ترین قیمت به صورت ۲۴ ساعته در خدمت شماست.")
 
 if __name__ == "__main__":
-    print("Bot Krelivo is running...")
+    port = int(os.environ.get("PORT", 5000))
+    import threading
+    threading.Thread(target=server.run, kwargs={"host": "0.0.0.0", "port": port}).start()
     bot.infinity_polling()
