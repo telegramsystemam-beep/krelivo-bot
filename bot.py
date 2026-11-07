@@ -3,6 +3,7 @@ import telebot
 from telebot import types
 from flask import Flask
 import threading
+from datetime import datetime
 
 TOKEN = "9081123644:AAGv3PKfhdXcllBYkvvy11W07fKub6VLKqQ"
 bot = telebot.TeleBot(TOKEN)
@@ -13,14 +14,16 @@ user_languages = {}
 user_states = {}
 user_invites = {}
 user_referred = set()
+user_balances = {}       # ذخیره سکه های KP کاربران
+user_last_checkin = {}   # ذخیره تاریخ آخرین ورود روزانه
 
-# دیکشنری کامل و بدون نقص ترجمه‌ها
 TRANSLATIONS = {
     "en": {
         "welcome": "Welcome to Krelivo Store! 🚀\n\nExplore our exclusive digital products and services below.",
         "catalog": "📦 Catalog", "cart": "🛒 Cart", "profile": "👤 Profile",
         "premium": "⭐ Premium", "affiliate": "🤝 Referral",
         "language": "🌐 Language", "support": "🎫 Support",
+        "leaderboard": "🏆 Leaderboard", "daily": "🎁 Daily Bonus",
         "back": "🔙 Back", "new_ticket": "🎫 New Ticket", "my_tickets": "📁 My Tickets",
         "privacy": "🔒 Privacy Policy", "terms": "📄 Terms of Service",
         "support_text": "🎫 **Support Center**\n\nChoose an option below:",
@@ -32,6 +35,7 @@ TRANSLATIONS = {
         "catalog": "📦 کاتالوگ", "cart": "🛒 سبد خرید", "profile": "👤 پروفایل",
         "premium": "⭐ پریمیوم", "affiliate": "🤝 سیستم معرفی",
         "language": "🌐 زبان", "support": "🎫 پشتیبانی",
+        "leaderboard": "🏆 لیدربورد", "daily": "🎁 هدیه روزانه",
         "back": "🔙 بازگشت", "new_ticket": "🎫 تیکت جدید", "my_tickets": "📁 تیکت‌های من",
         "privacy": "🔒 حریم خصوصی", "terms": "📄 شرایط خدمات",
         "support_text": "🎫 **مرکز پشتیبانی**\n\nلطفاً یکی از گزینه‌های زیر را انتخاب کنید:",
@@ -39,136 +43,148 @@ TRANSLATIONS = {
         "ticket_success": "✅ پیام شما برای پشتیبانی ارسال شد!"
     },
     "ru": {
-        "welcome": "Добро пожаловать в Krelivo Store! 🚀\n\nИзучите наши эксклюзивные продукты ниже.",
+        "welcome": "Добро пожаловать в Krelivo Store! 🚀\n\nИзучите наши продукты ниже.",
         "catalog": "📦 Каталог", "cart": "🛒 Корзина", "profile": "👤 Профиль",
         "premium": "⭐ Премиум", "affiliate": "🤝 Рефералы",
         "language": "🌐 Язык", "support": "🎫 Поддержка",
+        "leaderboard": "🏆 Лидеры", "daily": "🎁 Бонус",
         "back": "🔙 Назад", "new_ticket": "🎫 Новый тикет", "my_tickets": "📁 Мои тикеты",
         "privacy": "🔒 Конфиденциальность", "terms": "📄 Условия",
-        "support_text": "🎫 **Центр поддержки**\n\nВыберите вариант ниже:",
-        "ticket_prompt": "📝 Отправьте ваше сообщение в службу поддержки:",
-        "ticket_success": "✅ Ваше сообщение отправлено в поддержку!"
+        "support_text": "🎫 **Центр поддержки**\n\nВыберите вариант:",
+        "ticket_prompt": "📝 Отправьте сообщение в поддержку:",
+        "ticket_success": "✅ Сообщение отправлено!"
     },
     "uk": {
         "welcome": "Ласкаво просимо до Krelivo Store! 🚀\n\nДосліджуйте наші продукти нижче.",
         "catalog": "📦 Каталог", "cart": "🛒 Кошик", "profile": "👤 Профіль",
         "premium": "⭐ Преміум", "affiliate": "🤝 Реферали",
         "language": "🌐 Мова", "support": "🎫 Підтримка",
+        "leaderboard": "🏆 Лідери", "daily": "🎁 Бонус",
         "back": "🔙 Назад", "new_ticket": "🎫 Новий тикет", "my_tickets": "📁 Мої тикети",
         "privacy": "🔒 Конфіденційність", "terms": "📄 Умови",
-        "support_text": "🎫 **Центр підтримки**\n\nВиберіть варіант нижче:",
-        "ticket_prompt": "📝 Надішліть ваше повідомлення до підтримки:",
-        "ticket_success": "✅ Повідомлення надіслано до підтримки!"
+        "support_text": "🎫 **Центр підтримки**\n\nВиберіть варіант:",
+        "ticket_prompt": "📝 Надішліть повідомлення до підтримки:",
+        "ticket_success": "✅ Повідомлення надіслано!"
     },
     "ar": {
-        "welcome": "أهلاً بك في متجر Krelivo! 🚀\n\nاستكشف منتجاتنا الحصرية أدناه.",
+        "welcome": "أهلاً بك في متجر Krelivo! 🚀\n\nاستكشف منتجاتنا أدناه.",
         "catalog": "📦 الكتالوج", "cart": "🛒 السلة", "profile": "👤 الملف",
         "premium": "⭐ المميزة", "affiliate": "🤝 نظام الإحالة",
         "language": "🌐 اللغة", "support": "🎫 الدعم",
+        "leaderboard": "🏆 لوحة الصدارة", "daily": "🎁 الهدية اليومية",
         "back": "🔙 رجوع", "new_ticket": "🎫 تذكرة جديدة", "my_tickets": "📁 تذاكري",
         "privacy": "🔒 الخصوصية", "terms": "📄 الشروط",
-        "support_text": "🎫 **مركز الدعم**\n\nاختر خياراً أدناه:",
-        "ticket_prompt": "📝 يرجى إرسال رسالتك لفريق الدعم:",
-        "ticket_success": "✅ تم إرسال رسالتك للدعم!"
+        "support_text": "🎫 **مركز الدعم**\n\nاختر خياراً:",
+        "ticket_prompt": "📝 أرسل رسالتك للدعم:",
+        "ticket_success": "✅ تم إرسال رسالتك!"
     },
     "zh": {
-        "welcome": "欢迎来到 Krelivo 商店！🚀\n\n在下方探索我们的独家数字产品。",
+        "welcome": "欢迎来到 Krelivo 商店！🚀\n\n在下方探索产品。",
         "catalog": "📦 目录", "cart": "🛒 购物车", "profile": "👤 个人资料",
         "premium": "⭐ 高级", "affiliate": "🤝 推荐系统",
         "language": "🌐 语言", "support": "🎫 支持",
+        "leaderboard": "🏆 排行榜", "daily": "🎁 每日奖励",
         "back": "🔙 返回", "new_ticket": "🎫 新建工单", "my_tickets": "📁 我的工单",
         "privacy": "🔒 隐私政策", "terms": "📄 服务条款",
-        "support_text": "🎫 **支持中心**\n\n请选择以下选项：",
-        "ticket_prompt": "📝 请发送您的留言给支持团队：",
-        "ticket_success": "✅ 您的消息已发送至支持！"
+        "support_text": "🎫 **支持中心**\n\n请选择：",
+        "ticket_prompt": "📝 发送消息给支持：",
+        "ticket_success": "✅ 消息已发送！"
     },
     "es": {
-        "welcome": "¡Bienvenido a Krelivo Store! 🚀\n\nExplora nuestros productos exclusivos abajo.",
+        "welcome": "¡Bienvenido a Krelivo Store! 🚀\n\nExplora nuestros productos.",
         "catalog": "📦 Catálogo", "cart": "🛒 Carrito", "profile": "👤 Perfil",
         "premium": "⭐ Premium", "affiliate": "🤝 Referidos",
         "language": "🌐 Idioma", "support": "🎫 Soporte",
+        "leaderboard": "🏆 Líderes", "daily": "🎁 Bono diario",
         "back": "🔙 Volver", "new_ticket": "🎫 Nuevo ticket", "my_tickets": "📁 Mis tickets",
         "privacy": "🔒 Privacidad", "terms": "📄 Términos",
-        "support_text": "🎫 **Centro de Soporte**\n\nElige una opción:",
-        "ticket_prompt": "📝 Envía tu mensaje al equipo de soporte:",
-        "ticket_success": "✅ ¡Tu mensaje ha sido enviado al soporte!"
+        "support_text": "🎫 **Soporte**\n\nElige una opción:",
+        "ticket_prompt": "📝 Envía tu mensaje:",
+        "ticket_success": "✅ ¡Enviado!"
     },
     "id": {
-        "welcome": "Selamat datang di Krelivo Store! 🚀\n\nJelajahi produk eksklusif kami di bawah.",
+        "welcome": "Selamat datang di Krelivo Store! 🚀",
         "catalog": "📦 Katalog", "cart": "🛒 Keranjang", "profile": "👤 Profil",
         "premium": "⭐ Premium", "affiliate": "🤝 Referensi",
         "language": "🌐 Bahasa", "support": "🎫 Dukungan",
+        "leaderboard": "🏆 Pعperingkat", "daily": "🎁 Bonus Harian",
         "back": "🔙 Kembali", "new_ticket": "🎫 Tiket Baru", "my_tickets": "📁 Tiket Saya",
         "privacy": "🔒 Privasi", "terms": "📄 Ketentuan",
-        "support_text": "🎫 **Pusat Dukungan**\n\nPilih opsi di bawah:",
-        "ticket_prompt": "📝 Kirim pesan Anda ke tim dukungan:",
-        "ticket_success": "✅ Pesan Anda telah dikirim ke dukungan!"
+        "support_text": "🎫 **Dukungan**\n\nPilih opsi:",
+        "ticket_prompt": "📝 Kirim pesan:",
+        "ticket_success": "✅ Terkirim!"
     },
     "pt": {
-        "welcome": "Bem-vindo à Krelivo Store! 🚀\n\nExplore nossos produtos exclusivos abaixo.",
+        "welcome": "Bem-vindo à Krelivo Store! 🚀",
         "catalog": "📦 Catálogo", "cart": "🛒 Carrinho", "profile": "👤 Perfil",
         "premium": "⭐ Premium", "affiliate": "🤝 Indicação",
         "language": "🌐 Idioma", "support": "🎫 Suporte",
+        "leaderboard": "🏆 Líderes", "daily": "🎁 Bônus Diário",
         "back": "🔙 Voltar", "new_ticket": "🎫 Novo ticket", "my_tickets": "📁 Meus tickets",
         "privacy": "🔒 Privacidade", "terms": "📄 Termos",
-        "support_text": "🎫 **Centro de Suporte**\n\nEscolha uma opção:",
-        "ticket_prompt": "📝 Envie sua mensagem para o suporte:",
-        "ticket_success": "✅ Sua mensagem foi enviada ao suporte!"
+        "support_text": "🎫 **Suporte**\n\nEscolha:",
+        "ticket_prompt": "📝 Envie sua mensagem:",
+        "ticket_success": "✅ Enviado!"
     },
     "fr": {
-        "welcome": "Bienvenue sur Krelivo Store ! 🚀\n\nDécouvrez nos produits exclusifs ci-dessous.",
+        "welcome": "Bienvenue sur Krelivo Store ! 🚀",
         "catalog": "📦 Catalogue", "cart": "🛒 Panier", "profile": "👤 Profil",
         "premium": "⭐ Premium", "affiliate": "🤝 Parrainage",
         "language": "🌐 Langue", "support": "🎫 Support",
+        "leaderboard": "🏆 Classement", "daily": "🎁 Bonus Quotidien",
         "back": "🔙 Retour", "new_ticket": "🎫 Nouveau ticket", "my_tickets": "📁 Mes tickets",
         "privacy": "🔒 Confidentialité", "terms": "📄 Conditions",
-        "support_text": "🎫 **Centre de Support**\n\nChoisissez une option :",
-        "ticket_prompt": "📝 Veuillez envoyer votre message au support :",
-        "ticket_success": "✅ Votre message a été envoyé au support !"
+        "support_text": "🎫 **Support**\n\nChoisissez :",
+        "ticket_prompt": "📝 Envoyez votre message :",
+        "ticket_success": "✅ Envoyé !"
     },
     "tr": {
-        "welcome": "Krelivo Mağazasına Hoş Geldiniz! 🚀\n\nÜrünlerimizi aşağıda keşfedin.",
+        "welcome": "Krelivo Mağazasına Hoş Geldiniz! 🚀",
         "catalog": "📦 Katalog", "cart": "🛒 Sepet", "profile": "👤 Profil",
         "premium": "⭐ Premium", "affiliate": "🤝 Referans",
         "language": "🌐 Dil", "support": "🎫 Destek",
+        "leaderboard": "🏆 Liderler", "daily": "🎁 Günlük Bonus",
         "back": "🔙 Geri", "new_ticket": "🎫 Yeni Destek", "my_tickets": "📁 Biletlerim",
         "privacy": "🔒 Gizlilik", "terms": "📄 Şartlar",
-        "support_text": "🎫 **Destek Merkezi**\n\nBir seçenek belirleyin:",
-        "ticket_prompt": "📝 Destek ekibi için mesajınızı gönderin:",
-        "ticket_success": "✅ Mesajınız desteğe iletildi!"
+        "support_text": "🎫 **Destek**\n\nSeçenek seçin:",
+        "ticket_prompt": "📝 Mesajınızı gönderin:",
+        "ticket_success": "✅ Gönderildi!"
     },
     "vi": {
-        "welcome": "Chào mừng đến với Krelivo Store! 🚀\n\nKhám phá các sản phẩm bên dưới.",
+        "welcome": "Chào mừng đến với Krelivo Store! 🚀",
         "catalog": "📦 Danh mục", "cart": "🛒 Giỏ hàng", "profile": "👤 Hồ sơ",
         "premium": "⭐ Premium", "affiliate": "🤝 Giới thiệu",
         "language": "🌐 Ngôn ngữ", "support": "🎫 Hỗ trợ",
+        "leaderboard": "🏆 Bảng xếp hạng", "daily": "🎁 Thưởng ngày",
         "back": "🔙 Quay lại", "new_ticket": "🎫 Tạo vé mới", "my_tickets": "📁 Vé của tôi",
         "privacy": "🔒 Bảo mật", "terms": "📄 Điều khoản",
-        "support_text": "🎫 **Trung tâm hỗ trợ**\n\nChọn một tùy chọn:",
-        "ticket_prompt": "📝 Gửi tin nhắn của bạn cho hỗ trợ:",
-        "ticket_success": "✅ Tin nhắn của bạn đã được gửi tới hỗ trợ!"
+        "support_text": "🎫 **Hỗ trợ**\n\nChọn:",
+        "ticket_prompt": "📝 Gửi tin nhắn:",
+        "ticket_success": "✅ Đã gửi!"
     },
     "de": {
-        "welcome": "Willkommen im Krelivo Store! 🚀\n\nEntdecken Sie unsere Produkte unten.",
+        "welcome": "Willkommen im Krelivo Store! 🚀",
         "catalog": "📦 Katalog", "cart": "🛒 Warenkorb", "profile": "👤 Profil",
         "premium": "⭐ Premium", "affiliate": "🤝 Empfehlung",
         "language": "🌐 Sprache", "support": "🎫 Support",
+        "leaderboard": "🏆 Bestenliste", "daily": "🎁 Täglicher Bonus",
         "back": "🔙 Zurück", "new_ticket": "🎫 Neues Ticket", "my_tickets": "📁 Meine Tickets",
         "privacy": "🔒 Datenschutz", "terms": "📄 AGB",
-        "support_text": "🎫 **Support-Center**\n\nWählen Sie eine Option:",
-        "ticket_prompt": "📝 Senden Sie Ihre Nachricht an den Support:",
-        "ticket_success": "✅ Ihre Nachricht wurde an den Support gesendet!"
+        "support_text": "🎫 **Support**\n\nWählen:",
+        "ticket_prompt": "📝 Nachricht senden:",
+        "ticket_success": "✅ Gesendet!"
     },
     "it": {
-        "welcome": "Benvenuto su Krelivo Store! 🚀\n\nEsplora i nostri prodotti qui sotto.",
+        "welcome": "Benvenuto su Krelivo Store! 🚀",
         "catalog": "📦 Catalogo", "cart": "🛒 Carrello", "profile": "👤 Profilo",
         "premium": "⭐ Premium", "affiliate": "🤝 Affiliazione",
         "language": "🌐 Lingua", "support": "🎫 Supporto",
+        "leaderboard": "🏆 Classifica", "daily": "🎁 Bonus Giornaliero",
         "back": "🔙 Indietro", "new_ticket": "🎫 Nuovo ticket", "my_tickets": "📁 I miei ticket",
         "privacy": "🔒 Privacy", "terms": "📄 Termini",
-        "support_text": "🎫 **Centro Assistenza**\n\nScegli un'opzione:",
-        "ticket_prompt": "📝 Invia il tuo messaggio al supporto:",
-        "ticket_success": "✅ Il tuo messaggio è stato inviato al supporto!"
+        "support_text": "🎫 **Supporto**\n\nScegli:",
+        "ticket_prompt": "📝 Invia messaggio:",
+        "ticket_success": "✅ Inviato!"
     }
 }
 
@@ -187,6 +203,8 @@ def show_main_menu(chat_id, message_id=None, is_new=False):
         types.InlineKeyboardButton(t["profile"], callback_data="profile"),
         types.InlineKeyboardButton(t["premium"], callback_data="premium"),
         types.InlineKeyboardButton(t["affiliate"], callback_data="affiliate"),
+        types.InlineKeyboardButton(t["daily"], callback_data="daily_bonus"),
+        types.InlineKeyboardButton(t["leaderboard"], callback_data="leaderboard"),
         types.InlineKeyboardButton(t["language"], callback_data="language"),
         types.InlineKeyboardButton(t["support"], callback_data="support")
     )
@@ -209,8 +227,10 @@ def cmd_start(message):
             if inviter_id != user_id and user_id not in user_referred:
                 user_referred.add(user_id)
                 user_invites[inviter_id] = user_invites.get(inviter_id, 0) + 1
+                # پاداش دعوت: هر نفر ۱۰ سکه KP به معرف اضافه می‌کند
+                user_balances[inviter_id] = user_balances.get(inviter_id, 0) + 10
                 try:
-                    bot.send_message(inviter_id, "✨ Someone joined via your referral link! Reward added.")
+                    bot.send_message(inviter_id, "✨ Someone joined via your referral link! +10 KP added.")
                 except:
                     pass
         except:
@@ -235,11 +255,22 @@ def cmd_cart(message):
 
 @bot.message_handler(commands=['profile'])
 def cmd_profile(message):
-    lang = user_languages.get(message.chat.id, "en")
+    chat_id = message.chat.id
+    lang = user_languages.get(chat_id, "en")
     t = TRANSLATIONS.get(lang, TRANSLATIONS["en"])
+    balance = user_balances.get(chat_id, 0)
+    invites = user_invites.get(chat_id, 0)
+    
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton(t["back"], callback_data="main_menu"))
-    bot.send_message(message.chat.id, f"👤 **Profile:**\nID: `{message.chat.id}`\nStatus: Active", reply_markup=markup, parse_mode="Markdown")
+    text = (
+        f"👤 **Profile:**\n"
+        f"• ID: `{chat_id}`\n"
+        f"• Balance: **{balance} KP** (Krelivo Points)\n"
+        f"• Invited Friends: **{invites} / 100**\n"
+        f"• Status: Active"
+    )
+    bot.send_message(message.chat.id, text, reply_markup=markup, parse_mode="Markdown")
 
 @bot.message_handler(commands=['premium'])
 def cmd_premium(message):
@@ -265,7 +296,7 @@ def cmd_support(message):
 
 @bot.message_handler(commands=['help'])
 def cmd_help(message):
-    bot.send_message(message.chat.id, "ℹ️ **Help & Guide:**\nUse the buttons below to navigate through the store or contact support.", parse_mode="Markdown")
+    bot.send_message(message.chat.id, "ℹ️ **Help & Guide:**\nUse the buttons below to navigate or earn KP coins.", parse_mode="Markdown")
 
 def show_language_menu_msg(chat_id):
     markup = types.InlineKeyboardMarkup(row_width=2)
@@ -317,6 +348,29 @@ def callback_query(call):
     elif call.data == "affiliate":
         bot.answer_callback_query(call.id)
         show_affiliate_menu_edit(chat_id, message_id)
+    elif call.data == "daily_bonus":
+        today = datetime.now().strftime("%Y-%m-%d")
+        last_checkin = user_last_checkin.get(chat_id)
+        if last_checkin == today:
+            bot.answer_callback_query(call.id, "❌ You already claimed your daily 2 KP today!", show_alert=True)
+        else:
+            user_last_checkin[chat_id] = today
+            user_balances[chat_id] = user_balances.get(chat_id, 0) + 2
+            bot.answer_callback_query(call.id, "🎉 Success! +2 KP added to your balance.", show_alert=True)
+        show_affiliate_menu_edit(chat_id, message_id)
+    elif call.data == "leaderboard":
+        bot.answer_callback_query(call.id)
+        # ساخت لیدربورد بر اساس بیشترین سکه KP
+        sorted_users = sorted(user_balances.items(), key=lambda x: x[1], reverse=True)[:10]
+        lb_text = "🏆 **Krelivo Leaderboard (Top KP Earners)**\n\n"
+        if sorted_users:
+            for idx, (uid, bal) in enumerate(sorted_users, 1):
+                lb_text += f"{idx}. User `{uid}` — **{bal} KP**\n"
+        else:
+            lb_text += "No records yet. Be the first to earn KP!"
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton(t["back"], callback_data="main_menu"))
+        bot.edit_message_text(lb_text, chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
     elif call.data == "language":
         bot.answer_callback_query(call.id)
         show_language_menu_edit(chat_id, message_id)
@@ -340,9 +394,12 @@ def callback_query(call):
         bot.edit_message_text("🛒 **Shopping Cart:**\nYour cart is currently empty.", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
     elif call.data == "profile":
         bot.answer_callback_query(call.id)
+        balance = user_balances.get(chat_id, 0)
+        invites = user_invites.get(chat_id, 0)
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton(t["back"], callback_data="main_menu"))
-        bot.edit_message_text(f"👤 **Profile:**\nID: `{chat_id}`\nStatus: Active", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
+        text = f"👤 **Profile:**\n• ID: `{chat_id}`\n• Balance: **{balance} KP**\n• Invited: **{invites} / 100**\n• Status: Active"
+        bot.edit_message_text(text, chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
     elif call.data == "new_ticket":
         bot.answer_callback_query(call.id)
         user_states[chat_id] = "waiting_for_ticket"
@@ -393,14 +450,25 @@ def show_premium_menu_edit(chat_id, message_id):
 def show_affiliate_menu_edit(chat_id, message_id):
     lang = user_languages.get(chat_id, "en")
     t = TRANSLATIONS.get(lang, TRANSLATIONS["en"])
-    count = user_invites.get(chat_id, 0)
+    invites = user_invites.get(chat_id, 0)
+    balance = user_balances.get(chat_id, 0)
     ref_link = f"https://t.me/Krelivo_bot?start=ref_{chat_id}"
+    
     markup = types.InlineKeyboardMarkup(row_width=1)
     markup.add(
-        types.InlineKeyboardButton("🔗 Share Link", url=f"https://t.me/share/url?url={ref_link}&text=Join%20Krelivo%20Store!"),
+        types.InlineKeyboardButton("🎁 Claim Daily (+2 KP)", callback_data="daily_bonus"),
+        types.InlineKeyboardButton("🔗 Share Invite Link", url=f"https://t.me/share/url?url={ref_link}&text=Join%20Krelivo%20Store!"),
         types.InlineKeyboardButton(t["back"], callback_data="main_menu")
     )
-    text = f"🤝 **Referral System** ⭐\n\n🔗 **Invite Link:**\n`{ref_link}`\n\n📊 **Stats:**\n• Invited: **{count}**\n• Earned: **{count * 10} ⭐️**"
+    text = (
+        f"🤝 **Referral & Rewards System (KP)** ⭐\n\n"
+        f"🎁 **Daily Check-in:** Get +2 KP every day! (300 days = 1 Month Free)\n"
+        f"👥 **Referral Bonus:** Invite 100 friends = 1 Month Free\n\n"
+        f"🔗 **Your Invite Link:**\n`{ref_link}`\n\n"
+        f"📊 **Your Stats:**\n"
+        f"• Balance: **{balance} KP**\n"
+        f"• Invited: **{invites} / 100**"
+    )
     bot.edit_message_text(text, chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
 
 def show_language_menu_edit(chat_id, message_id):
