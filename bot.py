@@ -5,7 +5,6 @@ from flask import Flask
 import threading
 
 TOKEN = "9081123644:AAGv3PKfhdXcllBYkvvy11W07fKub6VLKqQ"
-ADMIN_ID = 123456789  # جایگزین با آیدی عددی تلگرام شما در صورت نیاز، یا پاسخ از طریق ریپلای
 bot = telebot.TeleBot(TOKEN)
 
 app = Flask('')
@@ -217,6 +216,14 @@ def cmd_start(message):
         except:
             pass
     show_main_menu(message.chat.id, None, is_new=True)
+
+@bot.message_handler(commands=['products'])
+def cmd_products(message):
+    lang = user_languages.get(message.chat.id, "en")
+    t = TRANSLATIONS.get(lang, TRANSLATIONS["en"])
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton(t["back"], callback_data="main_menu"))
+    bot.send_message(message.chat.id, "📦 **Catalog:**\nExclusive digital products will appear here soon.", reply_markup=markup, parse_mode="Markdown")
 
 @bot.message_handler(commands=['cart'])
 def cmd_cart(message):
@@ -430,12 +437,10 @@ def show_support_menu_edit(chat_id, message_id):
     )
     bot.edit_message_text(t["support_text"], chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
 
-# مدیریت ارسال پیام‌های تیکت به مدیر و پاسخ دادن به کاربران
 @bot.message_handler(func=lambda message: True, content_types=['text', 'photo', 'document', 'video'])
 def handle_all_messages(message):
     user_id = message.from_user.id
     
-    # اگر مدیر روی پیام کاربر در چت ربات ریپلای (Reply) کند، پیام به کاربر ارسال می‌شود
     if message.reply_to_message and message.reply_to_message.forward_from:
         target_user_id = message.reply_to_message.forward_from.id
         try:
@@ -445,20 +450,10 @@ def handle_all_messages(message):
             bot.reply_to(message, f"❌ Failed to send: {e}")
         return
 
-    # اگر کاربر معمولی در حال ارسال پیام تیکت باشد
     if user_states.get(user_id) == "waiting_for_ticket":
         user_states[user_id] = None
         lang = user_languages.get(user_id, "en")
         t = TRANSLATIONS.get(lang, TRANSLATIONS["en"])
-        
-        # ارسال پیام کاربر به شما (برای دریافت پیام‌ها، کافی است ربات را در پی‌وی خود استارت کرده باشید)
-        try:
-            bot.forward_message(chat_id=user_id, from_chat_id=user_id, message_id=message.id) # یا ارسال به مدیر
-            # ارسال مستقیم به چت شما از طریق forward
-        except:
-            pass
-        
-        # به عنوان روش مطمئن‌تر، فوروارد به خودِ کاربر با برچسب تیکت یا ارسال به ادمین با استفاده از forward_message اصلی تلگرام:
         bot.send_message(user_id, t["ticket_success"])
         show_main_menu(user_id)
 
