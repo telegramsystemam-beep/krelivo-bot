@@ -12,185 +12,48 @@ app = Flask('')
 
 user_languages = {}
 user_states = {}
-user_invites = {}
+user_invites = {}          # تعداد دعوت‌های کل هر کاربر
+user_invite_tier = {}      # مرحله فعلی پاداش دعوت کاربر (۱ تا ۴ به بعد)
 user_referred = set()
-user_balances = {}       # ذخیره سکه های KP کاربران
-user_last_checkin = {}   # ذخیره تاریخ آخرین ورود روزانه
+user_balances = {}         # سکه‌های KP
+user_last_checkin = {}     # تاریخ آخرین حضور روزانه
+user_nicknames = {}        # نام مستعار/پروفایل کاربران
 
 TRANSLATIONS = {
     "en": {
-        "welcome": "Welcome to Krelivo Store! 🚀\n\nExplore our exclusive digital products and services below.",
+        "welcome": "Welcome to Krelivo Gaming Hub! 🚀\n\nChoose an option below:",
         "catalog": "📦 Catalog", "cart": "🛒 Cart", "profile": "👤 Profile",
-        "premium": "⭐ Premium", "affiliate": "🤝 Referral",
+        "premium": "⭐ Premium", "affiliate": "🤝 Referrals & Tiers",
         "language": "🌐 Language", "support": "🎫 Support",
         "leaderboard": "🏆 Leaderboard", "daily": "🎁 Daily Bonus",
-        "back": "🔙 Back", "new_ticket": "🎫 New Ticket", "my_tickets": "📁 My Tickets",
+        "rewards_shop": "🎁 Rewards Shop", "back": "🔙 Back",
+        "new_ticket": "🎫 New Ticket", "my_tickets": "📁 My Tickets",
         "privacy": "🔒 Privacy Policy", "terms": "📄 Terms of Service",
-        "support_text": "🎫 **Support Center**\n\nChoose an option below:",
-        "ticket_prompt": "📝 Please send your message or issue for the support team:",
-        "ticket_success": "✅ Your message has been sent to support!"
+        "support_text": "🎫 **Support Center**\n\nChoose an option:",
+        "ticket_prompt": "📝 Please send your message to support:",
+        "ticket_success": "✅ Message sent successfully!"
     },
     "fa": {
-        "welcome": "به فروشگاه کرلیوو خوش آمدید! 🚀\n\nمحصولات و خدمات انحصاری ما را در زیر بررسی کنید.",
+        "welcome": "به هاب گیمینگ کرلیوو خوش آمدید! 🚀\n\nاز گزینه‌های زیر استفاده کنید:",
         "catalog": "📦 کاتالوگ", "cart": "🛒 سبد خرید", "profile": "👤 پروفایل",
-        "premium": "⭐ پریمیوم", "affiliate": "🤝 سیستم معرفی",
+        "premium": "⭐ پریمیوم", "affiliate": "🤝 سیستم معرفی و سطوح",
         "language": "🌐 زبان", "support": "🎫 پشتیبانی",
-        "leaderboard": "🏆 لیدربورد", "daily": "🎁 هدیه روزانه",
-        "back": "🔙 بازگشت", "new_ticket": "🎫 تیکت جدید", "my_tickets": "📁 تیکت‌های من",
+        "leaderboard": "🏆 لیدربورد", "daily": "🎁 حضور روزانه",
+        "rewards_shop": "🎁 فروشگاه جوایز", "back": "🔙 بازگشت",
+        "new_ticket": "🎫 تیکت جدید", "my_tickets": "📁 تیکت‌های من",
         "privacy": "🔒 حریم خصوصی", "terms": "📄 شرایط خدمات",
-        "support_text": "🎫 **مرکز پشتیبانی**\n\nلطفاً یکی از گزینه‌های زیر را انتخاب کنید:",
-        "ticket_prompt": "📝 لطفاً پیام یا مشکل خود را برای پشتیبانی ارسال کنید:",
-        "ticket_success": "✅ پیام شما برای پشتیبانی ارسال شد!"
-    },
-    "ru": {
-        "welcome": "Добро пожаловать в Krelivo Store! 🚀\n\nИзучите наши продукты ниже.",
-        "catalog": "📦 Каталог", "cart": "🛒 Корзина", "profile": "👤 Профиль",
-        "premium": "⭐ Премиум", "affiliate": "🤝 Рефералы",
-        "language": "🌐 Язык", "support": "🎫 Поддержка",
-        "leaderboard": "🏆 Лидеры", "daily": "🎁 Бонус",
-        "back": "🔙 Назад", "new_ticket": "🎫 Новый тикет", "my_tickets": "📁 Мои тикеты",
-        "privacy": "🔒 Конфиденциальность", "terms": "📄 Условия",
-        "support_text": "🎫 **Центр поддержки**\n\nВыберите вариант:",
-        "ticket_prompt": "📝 Отправьте сообщение в поддержку:",
-        "ticket_success": "✅ Сообщение отправлено!"
-    },
-    "uk": {
-        "welcome": "Ласкаво просимо до Krelivo Store! 🚀\n\nДосліджуйте наші продукти нижче.",
-        "catalog": "📦 Каталог", "cart": "🛒 Кошик", "profile": "👤 Профіль",
-        "premium": "⭐ Преміум", "affiliate": "🤝 Реферали",
-        "language": "🌐 Мова", "support": "🎫 Підтримка",
-        "leaderboard": "🏆 Лідери", "daily": "🎁 Бонус",
-        "back": "🔙 Назад", "new_ticket": "🎫 Новий тикет", "my_tickets": "📁 Мої тикети",
-        "privacy": "🔒 Конфіденційність", "terms": "📄 Умови",
-        "support_text": "🎫 **Центр підтримки**\n\nВиберіть варіант:",
-        "ticket_prompt": "📝 Надішліть повідомлення до підтримки:",
-        "ticket_success": "✅ Повідомлення надіслано!"
-    },
-    "ar": {
-        "welcome": "أهلاً بك في متجر Krelivo! 🚀\n\nاستكشف منتجاتنا أدناه.",
-        "catalog": "📦 الكتالوج", "cart": "🛒 السلة", "profile": "👤 الملف",
-        "premium": "⭐ المميزة", "affiliate": "🤝 نظام الإحالة",
-        "language": "🌐 اللغة", "support": "🎫 الدعم",
-        "leaderboard": "🏆 لوحة الصدارة", "daily": "🎁 الهدية اليومية",
-        "back": "🔙 رجوع", "new_ticket": "🎫 تذكرة جديدة", "my_tickets": "📁 تذاكري",
-        "privacy": "🔒 الخصوصية", "terms": "📄 الشروط",
-        "support_text": "🎫 **مركز الدعم**\n\nاختر خياراً:",
-        "ticket_prompt": "📝 أرسل رسالتك للدعم:",
-        "ticket_success": "✅ تم إرسال رسالتك!"
-    },
-    "zh": {
-        "welcome": "欢迎来到 Krelivo 商店！🚀\n\n在下方探索产品。",
-        "catalog": "📦 目录", "cart": "🛒 购物车", "profile": "👤 个人资料",
-        "premium": "⭐ 高级", "affiliate": "🤝 推荐系统",
-        "language": "🌐 语言", "support": "🎫 支持",
-        "leaderboard": "🏆 排行榜", "daily": "🎁 每日奖励",
-        "back": "🔙 返回", "new_ticket": "🎫 新建工单", "my_tickets": "📁 我的工单",
-        "privacy": "🔒 隐私政策", "terms": "📄 服务条款",
-        "support_text": "🎫 **支持中心**\n\n请选择：",
-        "ticket_prompt": "📝 发送消息给支持：",
-        "ticket_success": "✅ 消息已发送！"
-    },
-    "es": {
-        "welcome": "¡Bienvenido a Krelivo Store! 🚀\n\nExplora nuestros productos.",
-        "catalog": "📦 Catálogo", "cart": "🛒 Carrito", "profile": "👤 Perfil",
-        "premium": "⭐ Premium", "affiliate": "🤝 Referidos",
-        "language": "🌐 Idioma", "support": "🎫 Soporte",
-        "leaderboard": "🏆 Líderes", "daily": "🎁 Bono diario",
-        "back": "🔙 Volver", "new_ticket": "🎫 Nuevo ticket", "my_tickets": "📁 Mis tickets",
-        "privacy": "🔒 Privacidad", "terms": "📄 Términos",
-        "support_text": "🎫 **Soporte**\n\nElige una opción:",
-        "ticket_prompt": "📝 Envía tu mensaje:",
-        "ticket_success": "✅ ¡Enviado!"
-    },
-    "id": {
-        "welcome": "Selamat datang di Krelivo Store! 🚀",
-        "catalog": "📦 Katalog", "cart": "🛒 Keranjang", "profile": "👤 Profil",
-        "premium": "⭐ Premium", "affiliate": "🤝 Referensi",
-        "language": "🌐 Bahasa", "support": "🎫 Dukungan",
-        "leaderboard": "🏆 Pعperingkat", "daily": "🎁 Bonus Harian",
-        "back": "🔙 Kembali", "new_ticket": "🎫 Tiket Baru", "my_tickets": "📁 Tiket Saya",
-        "privacy": "🔒 Privasi", "terms": "📄 Ketentuan",
-        "support_text": "🎫 **Dukungan**\n\nPilih opsi:",
-        "ticket_prompt": "📝 Kirim pesan:",
-        "ticket_success": "✅ Terkirim!"
-    },
-    "pt": {
-        "welcome": "Bem-vindo à Krelivo Store! 🚀",
-        "catalog": "📦 Catálogo", "cart": "🛒 Carrinho", "profile": "👤 Perfil",
-        "premium": "⭐ Premium", "affiliate": "🤝 Indicação",
-        "language": "🌐 Idioma", "support": "🎫 Suporte",
-        "leaderboard": "🏆 Líderes", "daily": "🎁 Bônus Diário",
-        "back": "🔙 Voltar", "new_ticket": "🎫 Novo ticket", "my_tickets": "📁 Meus tickets",
-        "privacy": "🔒 Privacidade", "terms": "📄 Termos",
-        "support_text": "🎫 **Suporte**\n\nEscolha:",
-        "ticket_prompt": "📝 Envie sua mensagem:",
-        "ticket_success": "✅ Enviado!"
-    },
-    "fr": {
-        "welcome": "Bienvenue sur Krelivo Store ! 🚀",
-        "catalog": "📦 Catalogue", "cart": "🛒 Panier", "profile": "👤 Profil",
-        "premium": "⭐ Premium", "affiliate": "🤝 Parrainage",
-        "language": "🌐 Langue", "support": "🎫 Support",
-        "leaderboard": "🏆 Classement", "daily": "🎁 Bonus Quotidien",
-        "back": "🔙 Retour", "new_ticket": "🎫 Nouveau ticket", "my_tickets": "📁 Mes tickets",
-        "privacy": "🔒 Confidentialité", "terms": "📄 Conditions",
-        "support_text": "🎫 **Support**\n\nChoisissez :",
-        "ticket_prompt": "📝 Envoyez votre message :",
-        "ticket_success": "✅ Envoyé !"
-    },
-    "tr": {
-        "welcome": "Krelivo Mağazasına Hoş Geldiniz! 🚀",
-        "catalog": "📦 Katalog", "cart": "🛒 Sepet", "profile": "👤 Profil",
-        "premium": "⭐ Premium", "affiliate": "🤝 Referans",
-        "language": "🌐 Dil", "support": "🎫 Destek",
-        "leaderboard": "🏆 Liderler", "daily": "🎁 Günlük Bonus",
-        "back": "🔙 Geri", "new_ticket": "🎫 Yeni Destek", "my_tickets": "📁 Biletlerim",
-        "privacy": "🔒 Gizlilik", "terms": "📄 Şartlar",
-        "support_text": "🎫 **Destek**\n\nSeçenek seçin:",
-        "ticket_prompt": "📝 Mesajınızı gönderin:",
-        "ticket_success": "✅ Gönderildi!"
-    },
-    "vi": {
-        "welcome": "Chào mừng đến với Krelivo Store! 🚀",
-        "catalog": "📦 Danh mục", "cart": "🛒 Giỏ hàng", "profile": "👤 Hồ sơ",
-        "premium": "⭐ Premium", "affiliate": "🤝 Giới thiệu",
-        "language": "🌐 Ngôn ngữ", "support": "🎫 Hỗ trợ",
-        "leaderboard": "🏆 Bảng xếp hạng", "daily": "🎁 Thưởng ngày",
-        "back": "🔙 Quay lại", "new_ticket": "🎫 Tạo vé mới", "my_tickets": "📁 Vé của tôi",
-        "privacy": "🔒 Bảo mật", "terms": "📄 Điều khoản",
-        "support_text": "🎫 **Hỗ trợ**\n\nChọn:",
-        "ticket_prompt": "📝 Gửi tin nhắn:",
-        "ticket_success": "✅ Đã gửi!"
-    },
-    "de": {
-        "welcome": "Willkommen im Krelivo Store! 🚀",
-        "catalog": "📦 Katalog", "cart": "🛒 Warenkorb", "profile": "👤 Profil",
-        "premium": "⭐ Premium", "affiliate": "🤝 Empfehlung",
-        "language": "🌐 Sprache", "support": "🎫 Support",
-        "leaderboard": "🏆 Bestenliste", "daily": "🎁 Täglicher Bonus",
-        "back": "🔙 Zurück", "new_ticket": "🎫 Neues Ticket", "my_tickets": "📁 Meine Tickets",
-        "privacy": "🔒 Datenschutz", "terms": "📄 AGB",
-        "support_text": "🎫 **Support**\n\nWählen:",
-        "ticket_prompt": "📝 Nachricht senden:",
-        "ticket_success": "✅ Gesendet!"
-    },
-    "it": {
-        "welcome": "Benvenuto su Krelivo Store! 🚀",
-        "catalog": "📦 Catalogo", "cart": "🛒 Carrello", "profile": "👤 Profilo",
-        "premium": "⭐ Premium", "affiliate": "🤝 Affiliazione",
-        "language": "🌐 Lingua", "support": "🎫 Supporto",
-        "leaderboard": "🏆 Classifica", "daily": "🎁 Bonus Giornaliero",
-        "back": "🔙 Indietro", "new_ticket": "🎫 Nuovo ticket", "my_tickets": "📁 I miei ticket",
-        "privacy": "🔒 Privacy", "terms": "📄 Termini",
-        "support_text": "🎫 **Supporto**\n\nScegli:",
-        "ticket_prompt": "📝 Invia messaggio:",
-        "ticket_success": "✅ Inviato!"
+        "support_text": "🎫 **مرکز پشتیبانی**\n\nلطفاً یکی را انتخاب کنید:",
+        "ticket_prompt": "📝 لطفاً پیام خود را برای پشتیبانی بفرستید:",
+        "ticket_success": "✅ پیام شما با موفقیت ارسال شد!"
     }
 }
 
 @app.route('/')
 def home():
     return "Bot is alive and running!"
+
+def get_user_name(user_id, default_name):
+    return user_nicknames.get(user_id, f"User_{user_id}")
 
 def show_main_menu(chat_id, message_id=None, is_new=False):
     lang = user_languages.get(chat_id, "en")
@@ -201,10 +64,11 @@ def show_main_menu(chat_id, message_id=None, is_new=False):
         types.InlineKeyboardButton(t["catalog"], callback_data="catalog"),
         types.InlineKeyboardButton(t["cart"], callback_data="cart"),
         types.InlineKeyboardButton(t["profile"], callback_data="profile"),
-        types.InlineKeyboardButton(t["premium"], callback_data="premium"),
+        types.InlineKeyboardButton(t["rewards_shop"], callback_data="rewards_shop"),
         types.InlineKeyboardButton(t["affiliate"], callback_data="affiliate"),
         types.InlineKeyboardButton(t["daily"], callback_data="daily_bonus"),
         types.InlineKeyboardButton(t["leaderboard"], callback_data="leaderboard"),
+        types.InlineKeyboardButton(t["premium"], callback_data="premium"),
         types.InlineKeyboardButton(t["language"], callback_data="language"),
         types.InlineKeyboardButton(t["support"], callback_data="support")
     )
@@ -227,110 +91,49 @@ def cmd_start(message):
             if inviter_id != user_id and user_id not in user_referred:
                 user_referred.add(user_id)
                 user_invites[inviter_id] = user_invites.get(inviter_id, 0) + 1
-                # پاداش دعوت: هر نفر ۱۰ سکه KP به معرف اضافه می‌کند
                 user_balances[inviter_id] = user_balances.get(inviter_id, 0) + 10
                 try:
-                    bot.send_message(inviter_id, "✨ Someone joined via your referral link! +10 KP added.")
+                    bot.send_message(inviter_id, "✨ New referral joined! +10 KP added.")
                 except:
                     pass
         except:
             pass
     show_main_menu(message.chat.id, None, is_new=True)
 
-@bot.message_handler(commands=['products'])
-def cmd_products(message):
-    lang = user_languages.get(message.chat.id, "en")
-    t = TRANSLATIONS.get(lang, TRANSLATIONS["en"])
-    markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton(t["back"], callback_data="main_menu"))
-    bot.send_message(message.chat.id, "📦 **Catalog:**\nExclusive digital products will appear here soon.", reply_markup=markup, parse_mode="Markdown")
-
-@bot.message_handler(commands=['cart'])
-def cmd_cart(message):
-    lang = user_languages.get(message.chat.id, "en")
-    t = TRANSLATIONS.get(lang, TRANSLATIONS["en"])
-    markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton(t["back"], callback_data="main_menu"))
-    bot.send_message(message.chat.id, "🛒 **Shopping Cart:**\nYour cart is currently empty.", reply_markup=markup, parse_mode="Markdown")
-
 @bot.message_handler(commands=['profile'])
 def cmd_profile(message):
-    chat_id = message.chat.id
+    show_profile_page(message.chat.id)
+
+def show_profile_page(chat_id, message_id=None):
     lang = user_languages.get(chat_id, "en")
     t = TRANSLATIONS.get(lang, TRANSLATIONS["en"])
     balance = user_balances.get(chat_id, 0)
     invites = user_invites.get(chat_id, 0)
+    tier = user_invite_tier.get(chat_id, 1)
+    nickname = user_nicknames.get(chat_id, f"User_{chat_id}")
     
-    markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton(t["back"], callback_data="main_menu"))
-    text = (
-        f"👤 **Profile:**\n"
-        f"• ID: `{chat_id}`\n"
-        f"• Balance: **{balance} KP** (Krelivo Points)\n"
-        f"• Invited Friends: **{invites} / 100**\n"
-        f"• Status: Active"
-    )
-    bot.send_message(message.chat.id, text, reply_markup=markup, parse_mode="Markdown")
-
-@bot.message_handler(commands=['premium'])
-def cmd_premium(message):
-    lang = user_languages.get(message.chat.id, "en")
-    t = TRANSLATIONS.get(lang, TRANSLATIONS["en"])
+    # تعیین هدف دعوت مرحله‌ای مثل بازی
+    targets = {1: 100, 2: 200, 3: 500}
+    current_target = targets.get(tier, 1000)
+    
     markup = types.InlineKeyboardMarkup(row_width=1)
     markup.add(
-        types.InlineKeyboardButton("⭐ Single – 50 ⭐️", callback_data="pay_single"),
-        types.InlineKeyboardButton("⭐ Basic – 290 ⭐️", callback_data="pay_basic"),
-        types.InlineKeyboardButton("⭐ Pro – 690 ⭐️", callback_data="pay_pro"),
-        types.InlineKeyboardButton("⭐ Ultra – 1990 ⭐️", callback_data="pay_ultra"),
+        types.InlineKeyboardButton("✏️ تغییر نام کاربری (Nickname)", callback_data="set_nickname"),
         types.InlineKeyboardButton(t["back"], callback_data="main_menu")
     )
-    bot.send_message(message.chat.id, "⭐ **Premium Plans (30 Days)**\nChoose your subscription plan:", reply_markup=markup, parse_mode="Markdown")
-
-@bot.message_handler(commands=['language'])
-def cmd_language(message):
-    show_language_menu_msg(message.chat.id)
-
-@bot.message_handler(commands=['support'])
-def cmd_support(message):
-    show_support_menu_msg(message.chat.id)
-
-@bot.message_handler(commands=['help'])
-def cmd_help(message):
-    bot.send_message(message.chat.id, "ℹ️ **Help & Guide:**\nUse the buttons below to navigate or earn KP coins.", parse_mode="Markdown")
-
-def show_language_menu_msg(chat_id):
-    markup = types.InlineKeyboardMarkup(row_width=2)
-    markup.add(
-        types.InlineKeyboardButton("🇷🇺 Русский", callback_data="lang_ru"),
-        types.InlineKeyboardButton("🇬🇧 English", callback_data="lang_en"),
-        types.InlineKeyboardButton("🇺🇦 Українська", callback_data="lang_uk"),
-        types.InlineKeyboardButton("🇮🇷 فارسی", callback_data="lang_fa"),
-        types.InlineKeyboardButton("🇸🇦 العربية", callback_data="lang_ar"),
-        types.InlineKeyboardButton("🇨🇳 中文", callback_data="lang_cn"),
-        types.InlineKeyboardButton("🇪🇸 Español", callback_data="lang_es"),
-        types.InlineKeyboardButton("🇮🇩 Indonesia", callback_data="lang_id"),
-        types.InlineKeyboardButton("🇵🇹 Português", callback_data="lang_pt"),
-        types.InlineKeyboardButton("🇫🇷 Français", callback_data="lang_fr"),
-        types.InlineKeyboardButton("🇹🇷 Türkçe", callback_data="lang_tr"),
-        types.InlineKeyboardButton("🇻🇳 Tiếng Việt", callback_data="lang_vi"),
-        types.InlineKeyboardButton("🇩🇪 Deutsch", callback_data="lang_de"),
-        types.InlineKeyboardButton("🇮🇹 Italiano", callback_data="lang_it"),
-        types.InlineKeyboardButton("🔙 Back", callback_data="main_menu")
+    
+    text = (
+        f"👤 **پروفایل کاربری شما:**\n"
+        f"• نام: **{nickname}**\n"
+        f"• شناسه: `{chat_id}`\n"
+        f"• موجودی KP: **{balance} KP**\n"
+        f"• سطح دعوت فعلی: **مرحله {tier}** (پیشرفت: {invites} / {current_target})\n"
+        f"• وضعیت اشتراک: عادی"
     )
-    bot.send_message(chat_id, "🌐 **Select Language / انتخاب زبان / Выберите язык**", reply_markup=markup, parse_mode="Markdown")
-
-def show_support_menu_msg(chat_id):
-    lang = user_languages.get(chat_id, "en")
-    t = TRANSLATIONS.get(lang, TRANSLATIONS["en"])
-    markup = types.InlineKeyboardMarkup(row_width=2)
-    markup.add(
-        types.InlineKeyboardButton(t["new_ticket"], callback_data="new_ticket"),
-        types.InlineKeyboardButton(t["my_tickets"], callback_data="my_tickets"),
-        types.InlineKeyboardButton(t["privacy"], callback_data="privacy_policy"),
-        types.InlineKeyboardButton(t["terms"], callback_data="terms_service"),
-        types.InlineKeyboardButton(t["back"], callback_data="main_menu")
-    )
-    bot.send_message(chat_id, t["support_text"], reply_markup=markup, parse_mode="Markdown")
+    if message_id:
+        bot.edit_message_text(text, chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
+    else:
+        bot.send_message(chat_id, text, reply_markup=markup, parse_mode="Markdown")
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
@@ -342,32 +145,52 @@ def callback_query(call):
     if call.data == "main_menu":
         bot.answer_callback_query(call.id)
         show_main_menu(chat_id, message_id)
-    elif call.data == "premium":
+    elif call.data == "profile":
         bot.answer_callback_query(call.id)
-        show_premium_menu_edit(chat_id, message_id)
+        show_profile_page(chat_id, message_id)
+    elif call.data == "set_nickname":
+        bot.answer_callback_query(call.id)
+        user_states[chat_id] = "waiting_for_nickname"
+        bot.send_message(chat_id, "✏️ لطفاً نام کاربری (Nickname) جدید خود را بفرستید:")
+    elif call.data == "rewards_shop":
+        bot.answer_callback_query(call.id)
+        balance = user_balances.get(chat_id, 0)
+        markup = types.InlineKeyboardMarkup(row_width=1)
+        markup.add(
+            types.InlineKeyboardButton("⭐ خرید ۱ ماه اشتراک (۶۰۰ KP)", callback_data="buy_sub_kp"),
+            types.InlineKeyboardButton(t["back"], callback_data="main_menu")
+        )
+        text = f"🎁 **فروشگاه جوایز KP**\n\nموجودی شما: **{balance} KP**\n\nبا داشتن ۶۰۰ KP می‌توانید ۱ ماه اشتراک رایگان دریافت کنید!"
+        bot.edit_message_text(text, chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
+    elif call.data == "buy_sub_kp":
+        balance = user_balances.get(chat_id, 0)
+        if balance >= 600:
+            user_balances[chat_id] = balance - 600
+            bot.answer_callback_query(call.id, "🎉 تبریک! ۱ ماه اشتراک رایگان با موفقیت برای شما فعال شد.", show_alert=True)
+        else:
+            bot.answer_callback_query(call.id, f"❌ موجودی کافی نیست! شما به {600 - balance} KP دیگر نیاز دارید.", show_alert=True)
     elif call.data == "affiliate":
         bot.answer_callback_query(call.id)
         show_affiliate_menu_edit(chat_id, message_id)
     elif call.data == "daily_bonus":
         today = datetime.now().strftime("%Y-%m-%d")
-        last_checkin = user_last_checkin.get(chat_id)
-        if last_checkin == today:
-            bot.answer_callback_query(call.id, "❌ You already claimed your daily 2 KP today!", show_alert=True)
+        if user_last_checkin.get(chat_id) == today:
+            bot.answer_callback_query(call.id, "❌ امروز هدیه روزانه رو گرفتی!", show_alert=True)
         else:
             user_last_checkin[chat_id] = today
             user_balances[chat_id] = user_balances.get(chat_id, 0) + 2
-            bot.answer_callback_query(call.id, "🎉 Success! +2 KP added to your balance.", show_alert=True)
+            bot.answer_callback_query(call.id, "🎉 موفق بودی! +2 KP به حسابت اضافه شد.", show_alert=True)
         show_affiliate_menu_edit(chat_id, message_id)
     elif call.data == "leaderboard":
         bot.answer_callback_query(call.id)
-        # ساخت لیدربورد بر اساس بیشترین سکه KP
         sorted_users = sorted(user_balances.items(), key=lambda x: x[1], reverse=True)[:10]
-        lb_text = "🏆 **Krelivo Leaderboard (Top KP Earners)**\n\n"
+        lb_text = "🏆 **لیدربورد برترین‌های KP**\n\n"
         if sorted_users:
             for idx, (uid, bal) in enumerate(sorted_users, 1):
-                lb_text += f"{idx}. User `{uid}` — **{bal} KP**\n"
+                name = user_nicknames.get(uid, f"User_{uid}")
+                lb_text += f"{idx}. {name} — **{bal} KP**\n"
         else:
-            lb_text += "No records yet. Be the first to earn KP!"
+            lb_text += "هنوز رکوردی ثبت نشده است."
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton(t["back"], callback_data="main_menu"))
         bot.edit_message_text(lb_text, chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
@@ -386,20 +209,12 @@ def callback_query(call):
         bot.answer_callback_query(call.id)
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton(t["back"], callback_data="main_menu"))
-        bot.edit_message_text("📦 **Catalog:**\nExclusive digital products will appear here soon.", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
+        bot.edit_message_text("📦 **کاتالوگ محصولات:**\nبه زودی محصولات اینجا قرار می‌گیرند.", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
     elif call.data == "cart":
         bot.answer_callback_query(call.id)
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton(t["back"], callback_data="main_menu"))
-        bot.edit_message_text("🛒 **Shopping Cart:**\nYour cart is currently empty.", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
-    elif call.data == "profile":
-        bot.answer_callback_query(call.id)
-        balance = user_balances.get(chat_id, 0)
-        invites = user_invites.get(chat_id, 0)
-        markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton(t["back"], callback_data="main_menu"))
-        text = f"👤 **Profile:**\n• ID: `{chat_id}`\n• Balance: **{balance} KP**\n• Invited: **{invites} / 100**\n• Status: Active"
-        bot.edit_message_text(text, chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
+        bot.edit_message_text("🛒 **سبد خرید:**\nسبد خرید شما خالی است.", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
     elif call.data == "new_ticket":
         bot.answer_callback_query(call.id)
         user_states[chat_id] = "waiting_for_ticket"
@@ -408,17 +223,17 @@ def callback_query(call):
         bot.answer_callback_query(call.id)
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton(t["back"], callback_data="support"))
-        bot.edit_message_text("📁 **My Tickets:**\nNo active tickets found.", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
+        bot.edit_message_text("📁 **تیکت‌های من:**\nتیکت فعالی وجود ندارد.", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
     elif call.data == "privacy_policy":
         bot.answer_callback_query(call.id)
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton(t["back"], callback_data="support"))
-        bot.edit_message_text("🔒 **Privacy Policy:**\nYour data is secure and encrypted with us.", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
+        bot.edit_message_text("🔒 **حریم خصوصی:**\nاطلاعات شما محفوظ است.", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
     elif call.data == "terms_service":
         bot.answer_callback_query(call.id)
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton(t["back"], callback_data="support"))
-        bot.edit_message_text("📄 **Terms of Service:**\nAll sales are final. Use services responsibly.", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
+        bot.edit_message_text("📄 **شرایط خدمات:**\nاستفاده از ربات به منزله پذیرش قوانین است.", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
     elif call.data.startswith("pay_"):
         bot.answer_callback_query(call.id)
         prices = {"pay_single": 50, "pay_basic": 290, "pay_pro": 690, "pay_ultra": 1990}
@@ -434,40 +249,38 @@ def callback_query(call):
             prices=[types.LabeledPrice(label=f"{plan_name} Plan", amount=amount)]
         )
 
-def show_premium_menu_edit(chat_id, message_id):
-    lang = user_languages.get(chat_id, "en")
-    t = TRANSLATIONS.get(lang, TRANSLATIONS["en"])
-    markup = types.InlineKeyboardMarkup(row_width=1)
-    markup.add(
-        types.InlineKeyboardButton("⭐ Single – 50 ⭐️", callback_data="pay_single"),
-        types.InlineKeyboardButton("⭐ Basic – 290 ⭐️", callback_data="pay_basic"),
-        types.InlineKeyboardButton("⭐ Pro – 690 ⭐️", callback_data="pay_pro"),
-        types.InlineKeyboardButton("⭐ Ultra – 1990 ⭐️", callback_data="pay_ultra"),
-        types.InlineKeyboardButton(t["back"], callback_data="main_menu")
-    )
-    bot.edit_message_text("⭐ **Premium Plans (30 Days)**\nChoose your subscription plan:", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
-
 def show_affiliate_menu_edit(chat_id, message_id):
     lang = user_languages.get(chat_id, "en")
     t = TRANSLATIONS.get(lang, TRANSLATIONS["en"])
     invites = user_invites.get(chat_id, 0)
-    balance = user_balances.get(chat_id, 0)
+    tier = user_invite_tier.get(chat_id, 1)
+    
+    # تعیین مرحله بعدی بازی مثل سیستم مراحل کالاف/بازی‌ها
+    targets = {1: 100, 2: 200, 3: 500}
+    current_target = targets.get(tier, 1000)
+    
+    # بررسی اینکه آیا کاربر شرط مرحله فعلی رو رد کرده یا نه تا به مرحله بعدی بره
+    if invites >= current_target:
+        tier += 1
+        user_invite_tier[chat_id] = tier
+        current_target = targets.get(tier, 1000)
+
     ref_link = f"https://t.me/Krelivo_bot?start=ref_{chat_id}"
     
     markup = types.InlineKeyboardMarkup(row_width=1)
     markup.add(
-        types.InlineKeyboardButton("🎁 Claim Daily (+2 KP)", callback_data="daily_bonus"),
-        types.InlineKeyboardButton("🔗 Share Invite Link", url=f"https://t.me/share/url?url={ref_link}&text=Join%20Krelivo%20Store!"),
+        types.InlineKeyboardButton("🎁 دریافت هدیه روزانه (+2 KP)", callback_data="daily_bonus"),
+        types.InlineKeyboardButton("🔗 اشتراک‌گذاری لینک دعوت", url=f"https://t.me/share/url?url={ref_link}&text=Join%20Krelivo!"),
         types.InlineKeyboardButton(t["back"], callback_data="main_menu")
     )
+    
     text = (
-        f"🤝 **Referral & Rewards System (KP)** ⭐\n\n"
-        f"🎁 **Daily Check-in:** Get +2 KP every day! (300 days = 1 Month Free)\n"
-        f"👥 **Referral Bonus:** Invite 100 friends = 1 Month Free\n\n"
-        f"🔗 **Your Invite Link:**\n`{ref_link}`\n\n"
-        f"📊 **Your Stats:**\n"
-        f"• Balance: **{balance} KP**\n"
-        f"• Invited: **{invites} / 100**"
+        f"🤝 **سیستم معرفی و سطوح پاداش (مرحله‌ای)** ⭐\n\n"
+        f"🎮 **مرحله فعلی شما:** مرحله {tier}\n"
+        f"🎯 **هدف این مرحله:** دعوت {current_target} نفر (پیشرفت شما: {invites} نفر)\n"
+        f"🎁 **جایزه این مرحله:** ۱ ماه اشتراک رایگان!\n\n"
+        f"📌 *ترتیب مراحل:* مرحله ۱ (۱۰۰ نفر) ➔ مرحله ۲ (۲۰۰ نفر) ➔ مرحله ۳ (۵۰۰ نفر) ➔ مراحل بعدی (هر بار ۱۰۰۰ نفر).\n\n"
+        f"🔗 **لینک اختصاصی شما:**\n`{ref_link}`"
     )
     bot.edit_message_text(text, chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
 
@@ -490,7 +303,7 @@ def show_language_menu_edit(chat_id, message_id):
         types.InlineKeyboardButton("🇮🇹 Italiano", callback_data="lang_it"),
         types.InlineKeyboardButton("🔙 Back", callback_data="main_menu")
     )
-    bot.edit_message_text("🌐 **Select Language / انتخاب زبان / Выберите язык**", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
+    bot.edit_message_text("🌐 **Select Language / انتخاب زبان**", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
 
 def show_support_menu_edit(chat_id, message_id):
     lang = user_languages.get(chat_id, "en")
@@ -509,6 +322,14 @@ def show_support_menu_edit(chat_id, message_id):
 def handle_all_messages(message):
     user_id = message.from_user.id
     
+    # تنظیم نام کاربری (Nickname)
+    if user_states.get(user_id) == "waiting_for_nickname":
+        user_nicknames[user_id] = message.text[:20]  # حداکثر ۲۰ کاراکتر
+        user_states[user_id] = None
+        bot.send_message(user_id, f"✅ نام کاربری شما با موفقیت به **{message.text}** تغییر کرد!")
+        show_profile_page(user_id)
+        return
+
     if message.reply_to_message and message.reply_to_message.forward_from:
         target_user_id = message.reply_to_message.forward_from.id
         try:
@@ -531,7 +352,7 @@ def checkout(pre_checkout_query):
 
 @bot.message_handler(content_types=['successful_payment'])
 def got_payment(message):
-    bot.send_message(message.chat.id, "🎉 Payment successful! Thank you for your purchase.")
+    bot.send_message(message.chat.id, "🎉 Payment successful! Thank you.")
 
 def run_flask():
     port = int(os.environ.get("PORT", 10000))
