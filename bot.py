@@ -11,7 +11,6 @@ bot = telebot.TeleBot(TOKEN)
 
 app = Flask('')
 
-# فایل ذخیره‌سازی دائمی برای جلوگیری از صفر شدن اطلاعات هنگام ریستارت سرور
 DATA_FILE = "krelivo_data.json"
 
 def load_data():
@@ -34,7 +33,7 @@ db = load_data()
 user_states = {}
 user_referred = set()
 
-# دیکشنری کامل تمام ۱۴ زبان زنده دنیا
+# دیکشنری کامل و ۱۰۰٪ ترجمه‌شده برای ۱۴ زبان (اولویت اول: انگلیسی)
 TRANSLATIONS = {
     "en": {
         "welcome": "Welcome to Krelivo Gaming Hub! 🚀\n\nChoose an option below:",
@@ -45,9 +44,18 @@ TRANSLATIONS = {
         "rewards_shop": "🎁 Rewards Shop", "back": "🔙 Back",
         "new_ticket": "🎫 New Ticket", "my_tickets": "📁 My Tickets",
         "privacy": "🔒 Privacy Policy", "terms": "📄 Terms of Service",
-        "support_text": "🎫 **Support Center**\n\nChoose an option:",
+        "support_text": "🎫 **Support Center**\n\nChoose an option below:",
         "ticket_prompt": "📝 Please send your message to support:",
-        "ticket_success": "✅ Message sent successfully!"
+        "ticket_success": "✅ Message sent successfully to support!",
+        "profile_text": "👤 **Your Profile:**\n• Name: **{name}**\n• ID: `{uid}`\n• KP Balance: **{balance} KP**\n• Current Tier: **Tier {tier}** (Progress: {invites} / {target})\n• Status: Active",
+        "rewards_text": "🎁 **KP Rewards Shop**\n\nYour Balance: **{balance} KP**\n\nExchange 600 KP for 1 Month Free Subscription!",
+        "buy_sub_btn": "⭐ Buy 1 Month Sub (600 KP)",
+        "not_enough_kp": "❌ Not enough balance! You need {needed} more KP.",
+        "sub_success": "🎉 Congratulations! 1 Month Free Subscription activated successfully.",
+        "daily_success": "🎉 Success! +2 KP added to your balance.",
+        "daily_already": "❌ You already claimed your daily bonus today!",
+        "nickname_prompt": "✏️ Please send your new Nickname:",
+        "nickname_success": "✅ Your nickname has been successfully updated to **{name}**!"
     },
     "fa": {
         "welcome": "به هاب گیمینگ کرلیوو خوش آمدید! 🚀\n\nاز گزینه‌های زیر استفاده کنید:",
@@ -58,9 +66,18 @@ TRANSLATIONS = {
         "rewards_shop": "🎁 فروشگاه جوایز", "back": "🔙 بازگشت",
         "new_ticket": "🎫 تیکت جدید", "my_tickets": "📁 تیکت‌های من",
         "privacy": "🔒 حریم خصوصی", "terms": "📄 شرایط خدمات",
-        "support_text": "🎫 **مرکز پشتیبانی**\n\nلطفاً یکی را انتخاب کنید:",
+        "support_text": "🎫 **مرکز پشتیبانی**\n\nلطفاً یکی از گزینه‌های زیر را انتخاب کنید:",
         "ticket_prompt": "📝 لطفاً پیام خود را برای پشتیبانی بفرستید:",
-        "ticket_success": "✅ پیام شما با موفقیت ارسال شد!"
+        "ticket_success": "✅ پیام شما با موفقیت برای پشتیبانی ارسال شد!",
+        "profile_text": "👤 **پروفایل کاربری شما:**\n• نام: **{name}**\n• شناسه: `{uid}`\n• موجودی KP: **{balance} KP**\n• سطح دعوت فعلی: **مرحله {tier}** (پیشرفت: {invites} / {target})\n• وضعیت اشتراک: عادی",
+        "rewards_text": "🎁 **فروشگاه جوایز KP**\n\nموجودی شما: **{balance} KP**\n\nبا داشتن ۶۰۰ KP می‌توانید ۱ ماه اشتراک رایگان دریافت کنید!",
+        "buy_sub_btn": "⭐ خرید ۱ ماه اشتراک (۶۰۰ KP)",
+        "not_enough_kp": "❌ موجودی کافی نیست! شما به {needed} KP دیگر نیاز دارید.",
+        "sub_success": "🎉 تبریک! ۱ ماه اشتراک رایگان با موفقیت برای شما فعال شد.",
+        "daily_success": "🎉 موفق بودی! +2 KP به حسابت اضافه شد.",
+        "daily_already": "❌ امروز هدیه روزانه رو گرفتی!",
+        "nickname_prompt": "✏️ لطفاً نام کاربری (Nickname) جدید خود را بفرستید:",
+        "nickname_success": "✅ نام کاربری شما با موفقیت به **{name}** تغییر کرد!"
     },
     "ru": {
         "welcome": "Добро пожаловать в Krelivo Gaming Hub! 🚀",
@@ -73,7 +90,16 @@ TRANSLATIONS = {
         "privacy": "🔒 Конфиденциальность", "terms": "📄 Условия",
         "support_text": "🎫 **Поддержка**\n\nВыберите вариант:",
         "ticket_prompt": "📝 Отправьте сообщение:",
-        "ticket_success": "✅ Отправлено!"
+        "ticket_success": "✅ Отправлено!",
+        "profile_text": "👤 **Ваш профиль:**\n• Имя: **{name}**\n• ID: `{uid}`\n• Баланс KP: **{balance} KP**\n• Уровень: **Уровень {tier}**\n• Статус: Активен",
+        "rewards_text": "🎁 **Магазин наград KP**\n\nБаланс: **{balance} KP**",
+        "buy_sub_btn": "⭐ Купить подписку (600 KP)",
+        "not_enough_kp": "❌ Недостаточно средств!",
+        "sub_success": "🎉 Подписка активирована!",
+        "daily_success": "🎉 +2 KP добавлено!",
+        "daily_already": "❌ Бонус уже получен сегодня!",
+        "nickname_prompt": "✏️ Введите новое имя:",
+        "nickname_success": "✅ Имя изменено на **{name}**!"
     },
     "uk": {
         "welcome": "Ласкаво просимо до Krelivo Gaming Hub! 🚀",
@@ -86,7 +112,16 @@ TRANSLATIONS = {
         "privacy": "🔒 Конфіденційність", "terms": "📄 Умови",
         "support_text": "🎫 **Підтримка**\n\nВиберіть варіант:",
         "ticket_prompt": "📝 Надішліть повідомлення:",
-        "ticket_success": "✅ Надіслано!"
+        "ticket_success": "✅ Надіслано!",
+        "profile_text": "👤 **Профіль:**\n• Ім'я: **{name}**\n• ID: `{uid}`\n• KP: **{balance} KP**\n• Рівень: {tier}",
+        "rewards_text": "🎁 **Магазин KP**\nБаланс: **{balance} KP**",
+        "buy_sub_btn": "⭐ Купити підписку (600 KP)",
+        "not_enough_kp": "❌ Недостатньо балансу!",
+        "sub_success": "🎉 Успішно!",
+        "daily_success": "🎉 +2 KP додано!",
+        "daily_already": "❌ Вже отримано сьогодні!",
+        "nickname_prompt": "✏️ Введіть нікнейм:",
+        "nickname_success": "✅ Змінено на **{name}**!"
     },
     "ar": {
         "welcome": "أهلاً بك في متجر Krelivo! 🚀",
@@ -99,7 +134,16 @@ TRANSLATIONS = {
         "privacy": "🔒 الخصوصية", "terms": "📄 الشروط",
         "support_text": "🎫 **الدعم**\n\nاختر خياراً:",
         "ticket_prompt": "📝 أرسل رسالتك:",
-        "ticket_success": "✅ تم الإرسال!"
+        "ticket_success": "✅ تم الإرسال!",
+        "profile_text": "👤 **ملفك الشخصي:**\n• الاسم: **{name}**\n• المعرف: `{uid}`\n• الرصيد: **{balance} KP**\n• المستوى: {tier}",
+        "rewards_text": "🎁 **متجر المكافآت**\nرصيدك: **{balance} KP**",
+        "buy_sub_btn": "⭐ شراء اشتراك (600 KP)",
+        "not_enough_kp": "❌ الرصيد غير كافٍ!",
+        "sub_success": "🎉 تم تفعيل الاشتراك!",
+        "daily_success": "🎉 تمت إضافة +2 KP!",
+        "daily_already": "❌ لقد استلمت الهدية اليومية مسبقاً!",
+        "nickname_prompt": "✏️ أرسل اسمك المستعار الجديد:",
+        "nickname_success": "✅ تم تحديث الاسم إلى **{name}**!"
     },
     "zh": {
         "welcome": "欢迎来到 Krelivo 游戏中心！🚀",
@@ -112,7 +156,16 @@ TRANSLATIONS = {
         "privacy": "🔒 隐私政策", "terms": "📄 服务条款",
         "support_text": "🎫 **支持**\n\n请选择：",
         "ticket_prompt": "📝 发送消息：",
-        "ticket_success": "✅ 已发送！"
+        "ticket_success": "✅ 已发送！",
+        "profile_text": "👤 **您的个人资料:**\n• 名字: **{name}**\n• ID: `{uid}`\n• KP 余额: **{balance} KP**",
+        "rewards_text": "🎁 **KP 奖励商店**\n余额: **{balance} KP**",
+        "buy_sub_btn": "⭐ 购买订阅 (600 KP)",
+        "not_enough_kp": "❌ 余额不足！",
+        "sub_success": "🎉 成功激活订阅！",
+        "daily_success": "🎉 +2 KP 已添加！",
+        "daily_already": "❌ 今天已经领取过奖励了！",
+        "nickname_prompt": "✏️ 请发送您的新昵称：",
+        "nickname_success": "✅ 昵称已更新为 **{name}**！"
     },
     "es": {
         "welcome": "¡Bienvenido a Krelivo Gaming Hub! 🚀",
@@ -125,7 +178,16 @@ TRANSLATIONS = {
         "privacy": "🔒 Privacidad", "terms": "📄 Términos",
         "support_text": "🎫 **Soporte**\n\nElige una opción:",
         "ticket_prompt": "📝 Envía tu mensaje:",
-        "ticket_success": "✅ ¡Enviado!"
+        "ticket_success": "✅ ¡Enviado!",
+        "profile_text": "👤 **Tu Perfil:**\n• Nombre: **{name}**\n• ID: `{uid}`\n• Balance KP: **{balance} KP**",
+        "rewards_text": "🎁 **Tienda KP**\nBalance: **{balance} KP**",
+        "buy_sub_btn": "⭐ Comprar sub (600 KP)",
+        "not_enough_kp": "❌ ¡Saldo insuficiente!",
+        "sub_success": "🎉 ¡Suscripción activada!",
+        "daily_success": "🎉 ¡+2 KP añadidos!",
+        "daily_already": "❌ ¡Ya reclamaste tu bono hoy!",
+        "nickname_prompt": "✏️ Envía tu nuevo apodo:",
+        "nickname_success": "✅ ¡Apodo actualizado a **{name}**!"
     },
     "id": {
         "welcome": "Selamat datang di Krelivo Gaming Hub! 🚀",
@@ -138,7 +200,16 @@ TRANSLATIONS = {
         "privacy": "🔒 Privasi", "terms": "📄 Ketentuan",
         "support_text": "🎫 **Dukungan**\n\nPilih opsi:",
         "ticket_prompt": "📝 Kirim pesan:",
-        "ticket_success": "✅ Terkirim!"
+        "ticket_success": "✅ Terkirim!",
+        "profile_text": "👤 **Profil Anda:**\n• Nama: **{name}**\n• ID: `{uid}`\n• Saldo KP: **{balance} KP**",
+        "rewards_text": "🎁 **Toko KP**\nSaldo: **{balance} KP**",
+        "buy_sub_btn": "⭐ Beli Langganan (600 KP)",
+        "not_enough_kp": "❌ Saldo tidak cukup!",
+        "sub_success": "🎉 Berhasil diaktifkan!",
+        "daily_success": "🎉 +2 KP ditambahkan!",
+        "daily_already": "❌ Bonus harian sudah diklaim hari ini!",
+        "nickname_prompt": "✏️ Kirim nama panggilan baru Anda:",
+        "nickname_success": "✅ Nama panggilan diubah ke **{name}**!"
     },
     "pt": {
         "welcome": "Bem-vindo ao Krelivo Gaming Hub! 🚀",
@@ -151,7 +222,16 @@ TRANSLATIONS = {
         "privacy": "🔒 Privacidade", "terms": "📄 Termos",
         "support_text": "🎫 **Suporte**\n\nEscolha:",
         "ticket_prompt": "📝 Envie sua mensagem:",
-        "ticket_success": "✅ Enviado!"
+        "ticket_success": "✅ Enviado!",
+        "profile_text": "👤 **Seu Perfil:**\n• Nome: **{name}**\n• ID: `{uid}`\n• Saldo KP: **{balance} KP**",
+        "rewards_text": "🎁 **Loja KP**\nSaldo: **{balance} KP**",
+        "buy_sub_btn": "⭐ Comprar sub (600 KP)",
+        "not_enough_kp": "❌ Saldo insuficiente!",
+        "sub_success": "🎉 Sucesso!",
+        "daily_success": "🎉 +2 KP adicionados!",
+        "daily_already": "❌ Bônus já resgatado hoje!",
+        "nickname_prompt": "✏️ Envie seu novo apelido:",
+        "nickname_success": "✅ Apelido alterado para **{name}**!"
     },
     "fr": {
         "welcome": "Bienvenue sur Krelivo Gaming Hub ! 🚀",
@@ -164,7 +244,16 @@ TRANSLATIONS = {
         "privacy": "🔒 Confidentialité", "terms": "📄 Conditions",
         "support_text": "🎫 **Support**\n\nChoisissez :",
         "ticket_prompt": "📝 Envoyez votre message :",
-        "ticket_success": "✅ Envoyé !"
+        "ticket_success": "✅ Envoyé !",
+        "profile_text": "👤 **Votre Profil :**\n• Nom : **{name}**\n• ID : `{uid}`\n• Solde KP : **{balance} KP**",
+        "rewards_text": "🎁 **Boutique KP**\nSolde : **{balance} KP**",
+        "buy_sub_btn": "⭐ Acheter sub (600 KP)",
+        "not_enough_kp": "❌ Solde insuffisant !",
+        "sub_success": "🎉 Succès !",
+        "daily_success": "🎉 +2 KP ajoutés !",
+        "daily_already": "❌ Bonus déjà réclamé aujourd'hui !",
+        "nickname_prompt": "✏️ Envoyez votre nouveau pseudo :",
+        "nickname_success": "✅ Pseudo mis à jour en **{name}** !"
     },
     "tr": {
         "welcome": "Krelivo Gaming Hub'a Hoş Geldiniz! 🚀",
@@ -177,7 +266,16 @@ TRANSLATIONS = {
         "privacy": "🔒 Gizlilik", "terms": "📄 Şartlar",
         "support_text": "🎫 **Destek**\n\nSeçenek seçin:",
         "ticket_prompt": "📝 Mesajınızı gönderin:",
-        "ticket_success": "✅ Gönderildi!"
+        "ticket_success": "✅ Gönderildi!",
+        "profile_text": "👤 **Profiliniz:**\n• Ad: **{name}**\n• ID: `{uid}`\n• KP Bakiye: **{balance} KP**",
+        "rewards_text": "🎁 **KP Mağazası**\nBakiye: **{balance} KP**",
+        "buy_sub_btn": "⭐ 1 Ay Abonelik Al (600 KP)",
+        "not_enough_kp": "❌ Yetersiz bakiye!",
+        "sub_success": "🎉 Abonelik aktif edildi!",
+        "daily_success": "🎉 +2 KP eklendi!",
+        "daily_already": "❌ Günlük bonusu bugün zaten aldınız!",
+        "nickname_prompt": "✏️ Lütfen yeni takma adınızı gönderin:",
+        "nickname_success": "✅ Takma adınız **{name}** olarak güncellendi!"
     },
     "vi": {
         "welcome": "Chào mừng đến với Krelivo Gaming Hub! 🚀",
@@ -190,7 +288,16 @@ TRANSLATIONS = {
         "privacy": "🔒 Bảo mật", "terms": "📄 Điều khoản",
         "support_text": "🎫 **Hỗ trợ**\n\nChọn:",
         "ticket_prompt": "📝 Gửi tin nhắn:",
-        "ticket_success": "✅ Đã gửi!"
+        "ticket_success": "✅ Đã gửi!",
+        "profile_text": "👤 **Hồ sơ của bạn:**\n• Tên: **{name}**\n• ID: `{uid}`\n• Số dư KP: **{balance} KP**",
+        "rewards_text": "🎁 **Cửa hàng KP**\nSố dư: **{balance} KP**",
+        "buy_sub_btn": "⭐ Mua gói (600 KP)",
+        "not_enough_kp": "❌ Không đủ số dư!",
+        "sub_success": "🎉 Thành công!",
+        "daily_success": "🎉 Đã thêm +2 KP!",
+        "daily_already": "❌ Bạn đã nhận thưởng hôm nay rồi!",
+        "nickname_prompt": "✏️ Gửi biệt hiệu mới của bạn:",
+        "nickname_success": "✅ Đã đổi biệt hiệu thành **{name}**!"
     },
     "de": {
         "welcome": "Willkommen im Krelivo Gaming Hub! 🚀",
@@ -203,7 +310,16 @@ TRANSLATIONS = {
         "privacy": "🔒 Datenschutz", "terms": "📄 AGB",
         "support_text": "🎫 **Support**\n\nWählen:",
         "ticket_prompt": "📝 Nachricht senden:",
-        "ticket_success": "✅ Gesendet!"
+        "ticket_success": "✅ Gesendet!",
+        "profile_text": "👤 **Dein Profil:**\n• Name: **{name}**\n• ID: `{uid}`\n• KP Guthaben: **{balance} KP**",
+        "rewards_text": "🎁 **KP Shop**\nGuthaben: **{balance} KP**",
+        "buy_sub_btn": "⭐ Abo kaufen (600 KP)",
+        "not_enough_kp": "❌ Nicht genug Guthaben!",
+        "sub_success": "🎉 Abo erfolgreich aktiviert!",
+        "daily_success": "🎉 +2 KP hinzugefügt!",
+        "daily_already": "❌ Du hast den Bonus heute bereits beansprucht!",
+        "nickname_prompt": "✏️ Sende deinen neuen Nickname:",
+        "nickname_success": "✅ Nickname erfolgreich zu **{name}** geändert!"
     },
     "it": {
         "welcome": "Benvenuto su Krelivo Gaming Hub! 🚀",
@@ -216,7 +332,16 @@ TRANSLATIONS = {
         "privacy": "🔒 Privacy", "terms": "📄 Termini",
         "support_text": "🎫 **Supporto**\n\nScegli:",
         "ticket_prompt": "📝 Invia messaggio:",
-        "ticket_success": "✅ Inviato!"
+        "ticket_success": "✅ Inviato!",
+        "profile_text": "👤 **Il tuo Profilo:**\n• Nome: **{name}**\n• ID: `{uid}`\n• Saldo KP: **{balance} KP**",
+        "rewards_text": "🎁 **Negozio KP**\nSaldo: **{balance} KP**",
+        "buy_sub_btn": "⭐ Acquista sub (600 KP)",
+        "not_enough_kp": "❌ Saldo insufficiente!",
+        "sub_success": "🎉 Abbonamento attivato!",
+        "daily_success": "🎉 +2 KP aggiunti!",
+        "daily_already": "❌ Hai già riscosso il bonus oggi!",
+        "nickname_prompt": "✏️ Invia il tuo nuovo nickname:",
+        "nickname_success": "✅ Nickname aggiornato a **{name}**!"
     }
 }
 
@@ -291,18 +416,12 @@ def show_profile_page(chat_id, message_id=None):
     
     markup = types.InlineKeyboardMarkup(row_width=1)
     markup.add(
-        types.InlineKeyboardButton("✏️ تغییر نام کاربری (Nickname)", callback_data="set_nickname"),
+        types.InlineKeyboardButton("✏️ Change Nickname", callback_data="set_nickname"),
         types.InlineKeyboardButton(t["back"], callback_data="main_menu")
     )
     
-    text = (
-        f"👤 **پروفایل کاربری شما:**\n"
-        f"• نام: **{nickname}**\n"
-        f"• شناسه: `{chat_id}`\n"
-        f"• موجودی KP: **{balance} KP**\n"
-        f"• سطح دعوت فعلی: **مرحله {tier}** (پیشرفت: {invites} / {current_target})\n"
-        f"• وضعیت اشتراک: عادی"
-    )
+    text = t["profile_text"].format(name=nickname, uid=chat_id, balance=balance, tier=tier, invites=invites, target=current_target)
+    
     if message_id:
         try:
             bot.edit_message_text(text, chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
@@ -328,48 +447,48 @@ def callback_query(call):
     elif call.data == "set_nickname":
         bot.answer_callback_query(call.id)
         user_states[chat_id] = "waiting_for_nickname"
-        bot.send_message(chat_id, "✏️ لطفاً نام کاربری (Nickname) جدید خود را بفرستید:")
+        bot.send_message(chat_id, t["nickname_prompt"])
     elif call.data == "rewards_shop":
         bot.answer_callback_query(call.id)
         balance = db["balances"].get(c_id, 0)
         markup = types.InlineKeyboardMarkup(row_width=1)
         markup.add(
-            types.InlineKeyboardButton("⭐ خرید ۱ ماه اشتراک (۶۰۰ KP)", callback_data="buy_sub_kp"),
+            types.InlineKeyboardButton(t["buy_sub_btn"], callback_data="buy_sub_kp"),
             types.InlineKeyboardButton(t["back"], callback_data="main_menu")
         )
-        text = f"🎁 **فروشگاه جوایز KP**\n\nموجودی شما: **{balance} KP**\n\nبا داشتن ۶۰۰ KP می‌توانید ۱ ماه اشتراک رایگان دریافت کنید!"
+        text = t["rewards_text"].format(balance=balance)
         bot.edit_message_text(text, chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
     elif call.data == "buy_sub_kp":
         balance = db["balances"].get(c_id, 0)
         if balance >= 600:
             db["balances"][c_id] = balance - 600
             save_data(db)
-            bot.answer_callback_query(call.id, "🎉 تبریک! ۱ ماه اشتراک رایگان با موفقیت برای شما فعال شد.", show_alert=True)
+            bot.answer_callback_query(call.id, t["sub_success"], show_alert=True)
         else:
-            bot.answer_callback_query(call.id, f"❌ موجودی کافی نیست! شما به {600 - balance} KP دیگر نیاز دارید.", show_alert=True)
+            bot.answer_callback_query(call.id, t["not_enough_kp"].format(needed=600 - balance), show_alert=True)
     elif call.data == "affiliate":
         bot.answer_callback_query(call.id)
         show_affiliate_menu_edit(chat_id, message_id)
     elif call.data == "daily_bonus":
         today = datetime.now().strftime("%Y-%m-%d")
         if db["checkins"].get(c_id) == today:
-            bot.answer_callback_query(call.id, "❌ امروز هدیه روزانه رو گرفتی!", show_alert=True)
+            bot.answer_callback_query(call.id, t["daily_already"], show_alert=True)
         else:
             db["checkins"][c_id] = today
             db["balances"][c_id] = db["balances"].get(c_id, 0) + 2
             save_data(db)
-            bot.answer_callback_query(call.id, "🎉 موفق بودی! +2 KP به حسابت اضافه شد.", show_alert=True)
+            bot.answer_callback_query(call.id, t["daily_success"], show_alert=True)
         show_affiliate_menu_edit(chat_id, message_id)
     elif call.data == "leaderboard":
         bot.answer_callback_query(call.id)
         sorted_users = sorted(db["balances"].items(), key=lambda x: x[1], reverse=True)[:10]
-        lb_text = "🏆 **لیدربورد برترین‌های KP**\n\n"
+        lb_text = "🏆 **Leaderboard (Top KP)**\n\n"
         if sorted_users:
             for idx, (uid, bal) in enumerate(sorted_users, 1):
                 name = db["nicknames"].get(uid, f"User_{uid}")
                 lb_text += f"{idx}. {name} — **{bal} KP**\n"
         else:
-            lb_text += "هنوز رکوردی ثبت نشده است."
+            lb_text += "No records yet."
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton(t["back"], callback_data="main_menu"))
         bot.edit_message_text(lb_text, chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
@@ -392,12 +511,12 @@ def callback_query(call):
         bot.answer_callback_query(call.id)
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton(t["back"], callback_data="main_menu"))
-        bot.edit_message_text("📦 **کاتالوگ محصولات:**\nبه زودی محصولات اینجا قرار می‌گیرند.", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
+        bot.edit_message_text("📦 **Catalog:**\nExclusive products coming soon.", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
     elif call.data == "cart":
         bot.answer_callback_query(call.id)
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton(t["back"], callback_data="main_menu"))
-        bot.edit_message_text("🛒 **سبد خرید:**\nسبد خرید شما خالی است.", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
+        bot.edit_message_text("🛒 **Shopping Cart:**\nYour cart is empty.", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
     elif call.data == "new_ticket":
         bot.answer_callback_query(call.id)
         user_states[chat_id] = "waiting_for_ticket"
@@ -406,17 +525,17 @@ def callback_query(call):
         bot.answer_callback_query(call.id)
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton(t["back"], callback_data="support"))
-        bot.edit_message_text("📁 **تیکت‌های من:**\nتیکت فعالی وجود ندارد.", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
+        bot.edit_message_text("📁 **My Tickets:**\nNo active tickets.", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
     elif call.data == "privacy_policy":
         bot.answer_callback_query(call.id)
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton(t["back"], callback_data="support"))
-        bot.edit_message_text("🔒 **حریم خصوصی:**\nاطلاعات شما محفوظ است.", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
+        bot.edit_message_text("🔒 **Privacy Policy:**\nYour data is secure.", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
     elif call.data == "terms_service":
         bot.answer_callback_query(call.id)
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton(t["back"], callback_data="support"))
-        bot.edit_message_text("📄 **شرایط خدمات:**\nاستفاده از ربات به منزله پذیرش قوانین است.", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
+        bot.edit_message_text("📄 **Terms of Service:**\nAll sales are final.", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
     elif call.data.startswith("pay_"):
         bot.answer_callback_query(call.id)
         prices = {"pay_single": 50, "pay_basic": 290, "pay_pro": 690, "pay_ultra": 1990}
@@ -465,18 +584,17 @@ def show_affiliate_menu_edit(chat_id, message_id):
     
     markup = types.InlineKeyboardMarkup(row_width=1)
     markup.add(
-        types.InlineKeyboardButton("🎁 دریافت هدیه روزانه (+2 KP)", callback_data="daily_bonus"),
-        types.InlineKeyboardButton("🔗 اشتراک‌گذاری لینک دعوت", url=f"https://t.me/share/url?url={ref_link}&text=Join%20Krelivo!"),
+        types.InlineKeyboardButton("🎁 Claim Daily (+2 KP)", callback_data="daily_bonus"),
+        types.InlineKeyboardButton("🔗 Share Invite Link", url=f"https://t.me/share/url?url={ref_link}&text=Join%20Krelivo!"),
         types.InlineKeyboardButton(t["back"], callback_data="main_menu")
     )
     
     text = (
-        f"🤝 **سیستم معرفی و سطوح پاداش (مرحله‌ای)** ⭐\n\n"
-        f"🎮 **مرحله فعلی شما:** مرحله {tier}\n"
-        f"🎯 **هدف این مرحله:** دعوت {current_target} نفر (پیشرفت شما: {invites} نفر)\n"
-        f"🎁 **جایزه این مرحله:** ۱ ماه اشتراک رایگان!\n\n"
-        f"📌 *ترتیب مراحل:* مرحله ۱ (۱۰۰ نفر) ➔ مرحله ۲ (۲۰۰ نفر) ➔ مرحله ۳ (۵۰۰ نفر) ➔ مراحل بعدی (هر بار ۱۰۰۰ نفر).\n\n"
-        f"🔗 **لینک اختصاصی شما:**\n`{ref_link}`"
+        f"🤝 **Referral & Tiers System** ⭐\n\n"
+        f"🎮 **Your Current Tier:** Tier {tier}\n"
+        f"🎯 **Target:** {current_target} invites (Progress: {invites})\n"
+        f"🎁 **Reward:** 1 Month Free Subscription!\n\n"
+        f"🔗 **Your Invite Link:**\n`{ref_link}`"
     )
     bot.edit_message_text(text, chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
 
@@ -499,7 +617,7 @@ def show_language_menu_edit(chat_id, message_id):
         types.InlineKeyboardButton("🇮🇹 Italiano", callback_data="lang_it"),
         types.InlineKeyboardButton("🔙 Back", callback_data="main_menu")
     )
-    bot.edit_message_text("🌐 **Select Language / انتخاب زبان / Select language**", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
+    bot.edit_message_text("🌐 **Select Language / انتخاب زبان**", chat_id, message_id, reply_markup=markup, parse_mode="Markdown")
 
 def show_support_menu_edit(chat_id, message_id):
     lang = get_lang(chat_id)
@@ -518,13 +636,14 @@ def show_support_menu_edit(chat_id, message_id):
 def handle_all_messages(message):
     user_id = message.from_user.id
     c_id = str(user_id)
+    lang = get_lang(user_id)
+    t = TRANSLATIONS.get(lang, TRANSLATIONS["en"])
     
-    # تنظیم نام کاربری (Nickname)
     if user_states.get(user_id) == "waiting_for_nickname":
         db["nicknames"][c_id] = message.text[:20]
         save_data(db)
         user_states[user_id] = None
-        bot.send_message(user_id, f"✅ نام کاربری شما با موفقیت به **{message.text}** تغییر کرد!")
+        bot.send_message(user_id, t["nickname_success"].format(name=message.text[:20]))
         show_profile_page(user_id)
         return
 
@@ -539,8 +658,6 @@ def handle_all_messages(message):
 
     if user_states.get(user_id) == "waiting_for_ticket":
         user_states[user_id] = None
-        lang = get_lang(user_id)
-        t = TRANSLATIONS.get(lang, TRANSLATIONS["en"])
         bot.send_message(user_id, t["ticket_success"])
         show_main_menu(user_id)
 
